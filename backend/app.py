@@ -54,23 +54,23 @@ def run_evaluate():
         creators_sample = [
             {
                 "creator_id": "1", "handle": "BitcoinBoyz_IN", "display_name": "Bitcoin Boyz India",
-                "follower_count": 156000, "video_or_post_count": 521, "contact_status": "found"
+                "follower_count": 156000, "video_count": 487, "live_stream_count": 34, "contact_status": "found"
             },
             {
                 "creator_id": "2", "handle": "CryptoTradingWithRahul", "display_name": "Rahul Crypto Trading",
-                "follower_count": 125000, "video_or_post_count": 487, "contact_status": "found"
+                "follower_count": 125000, "video_count": 456, "live_stream_count": 31, "contact_status": "found"
             },
             {
                 "creator_id": "3", "handle": "TradingWithVinay", "display_name": "Vinay - The Trader",
-                "follower_count": 87500, "video_or_post_count": 342, "contact_status": "found"
+                "follower_count": 87500, "video_count": 312, "live_stream_count": 30, "contact_status": "found"
             },
             {
                 "creator_id": "4", "handle": "DeepTradingSignals", "display_name": "Deep Trading Signals",
-                "follower_count": 67800, "video_or_post_count": 289, "contact_status": "dm_only"
+                "follower_count": 67800, "video_count": 265, "live_stream_count": 24, "contact_status": "dm_only"
             },
             {
                 "creator_id": "5", "handle": "CryptoEdu_India", "display_name": "Crypto Education Hub",
-                "follower_count": 45000, "video_or_post_count": 156, "contact_status": "not_found"
+                "follower_count": 45000, "video_count": 142, "live_stream_count": 14, "contact_status": "not_found"
             }
         ]
 
@@ -294,11 +294,16 @@ def fetch_from_youtube_api(channel_id, api_key):
         snippet = channel.get('snippet', {})
         statistics = channel.get('statistics', {})
 
+        video_count = int(statistics.get('videoCount', 0))
+        # Estimate live streams as ~10% of video count (adjustable)
+        live_stream_count = max(0, int(video_count * 0.08))
+
         return {
             "handle": snippet.get('customUrl', '').lstrip('@'),
             "display_name": snippet.get('title', ''),
             "follower_count": int(statistics.get('subscriberCount', 0)),
-            "video_count": int(statistics.get('videoCount', 0)),
+            "video_count": video_count,
+            "live_stream_count": live_stream_count,
             "profile_picture": snippet.get('thumbnails', {}).get('high', {}).get('url', ''),
             "description": snippet.get('description', '')
         }
@@ -317,6 +322,7 @@ def get_mock_youtube_data(channel_link):
         "display_name": f"{handle} Channel",
         "follower_count": 125000,
         "video_count": 287,
+        "live_stream_count": 23,
         "profile_picture": "https://yt3.ggpht.com/mock",
         "description": "A crypto and trading education channel"
     }
@@ -331,27 +337,27 @@ def get_mock_youtube_data(channel_link):
 creators_database = {
     "bitcoinboyz_in": {
         "creator_id": "1", "handle": "BitcoinBoyz_IN", "display_name": "Bitcoin Boyz India",
-        "platform": "YouTube", "follower_count": 156000, "video_or_post_count": 521,
+        "platform": "YouTube", "follower_count": 156000, "video_count": 487, "live_stream_count": 34,
         "contact_status": "found", "profile_url": "https://youtube.com/@BitcoinBoyz_IN"
     },
     "cryptotradingwithrahul": {
         "creator_id": "2", "handle": "CryptoTradingWithRahul", "display_name": "Rahul Crypto Trading",
-        "platform": "YouTube", "follower_count": 125000, "video_or_post_count": 487,
+        "platform": "YouTube", "follower_count": 125000, "video_count": 456, "live_stream_count": 31,
         "contact_status": "found", "profile_url": "https://youtube.com/@CryptoTradingWithRahul"
     },
     "tradingwithvinay": {
         "creator_id": "3", "handle": "TradingWithVinay", "display_name": "Vinay - The Trader",
-        "platform": "YouTube", "follower_count": 87500, "video_or_post_count": 342,
+        "platform": "YouTube", "follower_count": 87500, "video_count": 312, "live_stream_count": 30,
         "contact_status": "found", "profile_url": "https://youtube.com/@TradingWithVinay"
     },
     "deeptradingsignals": {
         "creator_id": "4", "handle": "DeepTradingSignals", "display_name": "Deep Trading Signals",
-        "platform": "YouTube", "follower_count": 67800, "video_or_post_count": 289,
+        "platform": "YouTube", "follower_count": 67800, "video_count": 265, "live_stream_count": 24,
         "contact_status": "dm_only", "profile_url": "https://youtube.com/@DeepTradingSignals"
     },
     "cryptoedu_india": {
         "creator_id": "5", "handle": "CryptoEdu_India", "display_name": "Crypto Education Hub",
-        "platform": "YouTube", "follower_count": 45000, "video_or_post_count": 156,
+        "platform": "YouTube", "follower_count": 45000, "video_count": 142, "live_stream_count": 14,
         "contact_status": "not_found", "profile_url": "https://youtube.com/@CryptoEdu_India"
     }
 }
@@ -375,7 +381,8 @@ def add_creator():
         handle = params.get('handle', '').strip()
         display_name = params.get('display_name', '').strip()
         follower_count = int(params.get('follower_count', 0))
-        video_or_post_count = int(params.get('video_or_post_count', 0))
+        video_count = int(params.get('video_count', 0))
+        live_stream_count = int(params.get('live_stream_count', 0))
         platform = params.get('platform', 'YouTube').strip()
         contact_status = params.get('contact_status', 'not_found').strip()
 
@@ -391,7 +398,8 @@ def add_creator():
             "display_name": display_name,
             "platform": platform,
             "follower_count": follower_count,
-            "video_or_post_count": video_or_post_count,
+            "video_count": video_count,
+            "live_stream_count": live_stream_count,
             "contact_status": contact_status,
             "profile_url": f"https://{platform.lower()}.com/@{handle}" if platform == "YouTube" else f"https://{platform.lower()}.com/{handle}"
         }
@@ -417,7 +425,12 @@ def add_creator():
 def calculate_creator_metrics(creator):
     """Calculate all evaluation metrics for a creator with actual + scaled values."""
     fc = creator.get("follower_count", 0)
-    post_count = creator.get("video_or_post_count", 0)
+
+    # Count only videos and live streams for cadence
+    video_count = creator.get("video_count", 0)
+    live_stream_count = creator.get("live_stream_count", 0)
+    total_content = video_count + live_stream_count
+
     contact_status = creator.get("contact_status", "not_found")
 
     # 1. Follower Score - ACTUAL + SCALED
@@ -452,20 +465,21 @@ def calculate_creator_metrics(creator):
     view_ratio_pts = 0.15 if view_ratio >= 0.10 else 0.10
     view_ratio_pct = view_ratio * 100
 
-    # 3. Posting Cadence - ACTUAL + SCALED
-    cadence = (post_count / 180) * 7 if post_count > 0 else 0
+    # 3. Posting Cadence - ACTUAL + SCALED (Videos + Live Streams only)
+    # Assume ~52 weeks per year for annual calculation
+    cadence = (total_content / 52) if total_content > 0 else 0
     if cadence >= 2:
         cadence_pts = 0.15
-        cadence_label = "High"
+        cadence_label = "High (2+ per week)"
     elif cadence >= 1:
         cadence_pts = 0.12
-        cadence_label = "Good"
+        cadence_label = "Good (1-2 per week)"
     elif cadence >= 0.5:
         cadence_pts = 0.08
-        cadence_label = "Moderate"
+        cadence_label = "Moderate (bi-weekly)"
     else:
         cadence_pts = 0.03
-        cadence_label = "Low"
+        cadence_label = "Low (monthly)"
 
     # 4. Live Propensity (neutral if not captured)
     live_pts = 0.07
@@ -513,8 +527,11 @@ def calculate_creator_metrics(creator):
         "followers_actual": fc,
         "follower_tier": follower_tier,
         "cadence_actual": round(cadence, 2),
+        "cadence_actual_label": cadence_label,
+        "video_count_actual": video_count,
+        "live_stream_count_actual": live_stream_count,
+        "total_content_actual": total_content,
         "view_ratio_actual_pct": round(view_ratio_pct, 1),
-        "post_count_actual": post_count,
         "content_match_actual_pct": content_match_pct,
         "contact_actual": contact_label,
 
@@ -537,7 +554,8 @@ def calculate_creator_metrics(creator):
         "metrics_detail": {
             "Followers": f"{fc:,} → {follower_pts:.2f}/0.25",
             "View Ratio": f"{view_ratio_pct:.1f}% → {view_ratio_pts:.2f}/0.20",
-            "Cadence": f"{cadence:.2f} posts/wk → {cadence_pts:.2f}/0.15",
+            "Cadence": f"{cadence:.2f} videos/week → {cadence_pts:.2f}/0.15",
+            "Content": f"{video_count} videos + {live_stream_count} lives = {total_content} total",
             "Live Stream": f"{live_actual} → {live_pts:.2f}/0.10",
             "Content Match": f"{content_match_pct}% → {content_match_pts:.2f}/0.20",
             "Contact": f"{contact_label} → {contact_bonus:+.2f}",

@@ -924,10 +924,16 @@
                             </div>
 
                             <div>
-                                <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #333;">Total Videos</label>
-                                <input type="number" id="new-posts" placeholder="Auto-populated from YouTube" min="0" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;" required>
+                                <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #333;">Total Video Uploads</label>
+                                <input type="number" id="new-videos" placeholder="Auto-populated from YouTube" min="0" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;" required>
                                 <small style="color: #999; display: block; margin-top: 3px;">Fetched from YouTube API</small>
                             </div>
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #333;">Total Live Streams</label>
+                            <input type="number" id="new-lives" placeholder="e.g., 45" min="0" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
+                            <small style="color: #999; display: block; margin-top: 3px;">Live streams hosted (optional)</small>
                         </div>
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
@@ -989,7 +995,8 @@
                     document.getElementById('new-handle').value = data.data.handle || '';
                     document.getElementById('new-display-name').value = data.data.display_name || '';
                     document.getElementById('new-followers').value = data.data.follower_count || 0;
-                    document.getElementById('new-posts').value = data.data.video_count || 0;
+                    document.getElementById('new-videos').value = data.data.video_count || 0;
+                    document.getElementById('new-lives').value = data.data.live_stream_count || 0;
 
                     statusText.innerHTML = `✅ ${data.data.display_name} loaded! (${data.data.follower_count.toLocaleString()} subscribers, ${data.data.video_count} videos)`;
                     statusText.style.color = '#065f46';
@@ -1019,12 +1026,13 @@
             const handle = document.getElementById('new-handle').value.trim();
             const displayName = document.getElementById('new-display-name').value.trim();
             const followers = parseInt(document.getElementById('new-followers').value);
-            const posts = parseInt(document.getElementById('new-posts').value);
+            const videos = parseInt(document.getElementById('new-videos').value);
+            const lives = parseInt(document.getElementById('new-lives').value) || 0;
             const platform = document.getElementById('new-platform').value;
             const contact = document.getElementById('new-contact').value;
 
-            if (!handle || !displayName || !followers || !posts) {
-                showMessage('❌ Please fill in all fields', 'error');
+            if (!handle || !displayName || !followers || videos < 0) {
+                showMessage('❌ Please fill in required fields', 'error');
                 return;
             }
 
@@ -1038,7 +1046,8 @@
                         handle: handle,
                         display_name: displayName,
                         follower_count: followers,
-                        video_or_post_count: posts,
+                        video_count: videos,
+                        live_stream_count: lives,
                         platform: platform,
                         contact_status: contact
                     })
