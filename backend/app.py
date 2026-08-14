@@ -51,26 +51,27 @@ def run_evaluate():
     """Run Evaluate phase on creators with detailed metrics."""
     try:
         # Sample creators with metrics (in production, read from Google Sheets)
+        # video_count = posts in last 90 days, live_stream_count = live streams in last 90 days
         creators_sample = [
             {
                 "creator_id": "1", "handle": "BitcoinBoyz_IN", "display_name": "Bitcoin Boyz India",
-                "follower_count": 156000, "video_count": 487, "live_stream_count": 34, "contact_status": "found"
+                "follower_count": 156000, "video_count": 28, "live_stream_count": 3, "contact_status": "found"
             },
             {
                 "creator_id": "2", "handle": "CryptoTradingWithRahul", "display_name": "Rahul Crypto Trading",
-                "follower_count": 125000, "video_count": 456, "live_stream_count": 31, "contact_status": "found"
+                "follower_count": 125000, "video_count": 26, "live_stream_count": 2, "contact_status": "found"
             },
             {
                 "creator_id": "3", "handle": "TradingWithVinay", "display_name": "Vinay - The Trader",
-                "follower_count": 87500, "video_count": 312, "live_stream_count": 30, "contact_status": "found"
+                "follower_count": 87500, "video_count": 18, "live_stream_count": 2, "contact_status": "found"
             },
             {
                 "creator_id": "4", "handle": "DeepTradingSignals", "display_name": "Deep Trading Signals",
-                "follower_count": 67800, "video_count": 265, "live_stream_count": 24, "contact_status": "dm_only"
+                "follower_count": 67800, "video_count": 15, "live_stream_count": 1, "contact_status": "dm_only"
             },
             {
                 "creator_id": "5", "handle": "CryptoEdu_India", "display_name": "Crypto Education Hub",
-                "follower_count": 45000, "video_count": 142, "live_stream_count": 14, "contact_status": "not_found"
+                "follower_count": 45000, "video_count": 8, "live_stream_count": 1, "contact_status": "not_found"
             }
         ]
 
@@ -334,30 +335,31 @@ def get_mock_youtube_data(channel_link):
     })
 
 # Global in-memory database that persists during session
+# video_count = posts in last 90 days, live_stream_count = live streams in last 90 days
 creators_database = {
     "bitcoinboyz_in": {
         "creator_id": "1", "handle": "BitcoinBoyz_IN", "display_name": "Bitcoin Boyz India",
-        "platform": "YouTube", "follower_count": 156000, "video_count": 487, "live_stream_count": 34,
+        "platform": "YouTube", "follower_count": 156000, "video_count": 28, "live_stream_count": 3,
         "contact_status": "found", "profile_url": "https://youtube.com/@BitcoinBoyz_IN"
     },
     "cryptotradingwithrahul": {
         "creator_id": "2", "handle": "CryptoTradingWithRahul", "display_name": "Rahul Crypto Trading",
-        "platform": "YouTube", "follower_count": 125000, "video_count": 456, "live_stream_count": 31,
+        "platform": "YouTube", "follower_count": 125000, "video_count": 26, "live_stream_count": 2,
         "contact_status": "found", "profile_url": "https://youtube.com/@CryptoTradingWithRahul"
     },
     "tradingwithvinay": {
         "creator_id": "3", "handle": "TradingWithVinay", "display_name": "Vinay - The Trader",
-        "platform": "YouTube", "follower_count": 87500, "video_count": 312, "live_stream_count": 30,
+        "platform": "YouTube", "follower_count": 87500, "video_count": 18, "live_stream_count": 2,
         "contact_status": "found", "profile_url": "https://youtube.com/@TradingWithVinay"
     },
     "deeptradingsignals": {
         "creator_id": "4", "handle": "DeepTradingSignals", "display_name": "Deep Trading Signals",
-        "platform": "YouTube", "follower_count": 67800, "video_count": 265, "live_stream_count": 24,
+        "platform": "YouTube", "follower_count": 67800, "video_count": 15, "live_stream_count": 1,
         "contact_status": "dm_only", "profile_url": "https://youtube.com/@DeepTradingSignals"
     },
     "cryptoedu_india": {
         "creator_id": "5", "handle": "CryptoEdu_India", "display_name": "Crypto Education Hub",
-        "platform": "YouTube", "follower_count": 45000, "video_count": 142, "live_stream_count": 14,
+        "platform": "YouTube", "follower_count": 45000, "video_count": 8, "live_stream_count": 1,
         "contact_status": "not_found", "profile_url": "https://youtube.com/@CryptoEdu_India"
     }
 }
@@ -426,10 +428,11 @@ def calculate_creator_metrics(creator):
     """Calculate all evaluation metrics for a creator with actual + scaled values."""
     fc = creator.get("follower_count", 0)
 
-    # Count only videos and live streams for cadence
-    video_count = creator.get("video_count", 0)
+    # Posts in last 90 days (videos + live streams combined)
+    # This measures CURRENT activity, not lifetime totals
+    posts_90_days = creator.get("video_count", 0)  # Now represents 90-day activity
     live_stream_count = creator.get("live_stream_count", 0)
-    total_content = video_count + live_stream_count
+    total_90day_content = posts_90_days + live_stream_count
 
     contact_status = creator.get("contact_status", "not_found")
 
@@ -465,9 +468,11 @@ def calculate_creator_metrics(creator):
     view_ratio_pts = 0.15 if view_ratio >= 0.10 else 0.10
     view_ratio_pct = view_ratio * 100
 
-    # 3. Posting Cadence - ACTUAL + SCALED (Videos + Live Streams only)
-    # Assume ~52 weeks per year for annual calculation
-    cadence = (total_content / 52) if total_content > 0 else 0
+    # 3. Posting Cadence - ACTUAL + SCALED (Last 90 days only)
+    # 90 days = ~13 weeks, so weekly cadence = posts_in_90_days / 13
+    cadence = (total_90day_content / 13) if total_90day_content > 0 else 0
+    cadence_period = "last 90 days"
+
     if cadence >= 2:
         cadence_pts = 0.15
         cadence_label = "High (2+ per week)"
@@ -479,7 +484,7 @@ def calculate_creator_metrics(creator):
         cadence_label = "Moderate (bi-weekly)"
     else:
         cadence_pts = 0.03
-        cadence_label = "Low (monthly)"
+        cadence_label = "Low (<bi-weekly)"
 
     # 4. Live Propensity (neutral if not captured)
     live_pts = 0.07
@@ -528,9 +533,10 @@ def calculate_creator_metrics(creator):
         "follower_tier": follower_tier,
         "cadence_actual": round(cadence, 2),
         "cadence_actual_label": cadence_label,
-        "video_count_actual": video_count,
+        "cadence_period": cadence_period,
+        "posts_90days_actual": posts_90_days,
         "live_stream_count_actual": live_stream_count,
-        "total_content_actual": total_content,
+        "total_90day_content_actual": total_90day_content,
         "view_ratio_actual_pct": round(view_ratio_pct, 1),
         "content_match_actual_pct": content_match_pct,
         "contact_actual": contact_label,
@@ -554,8 +560,8 @@ def calculate_creator_metrics(creator):
         "metrics_detail": {
             "Followers": f"{fc:,} → {follower_pts:.2f}/0.25",
             "View Ratio": f"{view_ratio_pct:.1f}% → {view_ratio_pts:.2f}/0.20",
-            "Cadence": f"{cadence:.2f} videos/week → {cadence_pts:.2f}/0.15",
-            "Content": f"{video_count} videos + {live_stream_count} lives = {total_content} total",
+            "Cadence (90d avg)": f"{cadence:.2f} posts/week → {cadence_pts:.2f}/0.15",
+            "Content": f"{posts_90_days} posts + {live_stream_count} lives = {total_90day_content} in last 90 days",
             "Live Stream": f"{live_actual} → {live_pts:.2f}/0.10",
             "Content Match": f"{content_match_pct}% → {content_match_pts:.2f}/0.20",
             "Contact": f"{contact_label} → {contact_bonus:+.2f}",
