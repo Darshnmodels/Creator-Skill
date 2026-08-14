@@ -5,6 +5,8 @@ from datetime import datetime
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import logging
+import requests
+from urllib.parse import urlparse, parse_qs
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.join(BASE_DIR, '..', 'frontend')
@@ -174,6 +176,156 @@ def parse_channel_link(link):
         return link.lstrip('@')
 
     return link
+
+def extract_youtube_channel_id(link):
+    """Extract YouTube channel ID from various YouTube URL formats."""
+    link = link.strip().lower()
+
+    # Handle @handle format (custom URL)
+    if '/@' in link:
+        handle = link.split('/@')[1].split('?')[0].split('/')[0]
+        return f"@{handle}"
+
+    # Handle /c/ChannelName format (legacy)
+    if '/c/' in link:
+        channel_name = link.split('/c/')[1].split('?')[0].split('/')[0]
+        return f"c/{channel_name}"
+
+    # Handle channel ID format (UC...)
+    if '/channel/' in link:
+        channel_id = link.split('/channel/')[1].split('?')[0].split('/')[0]
+        return channel_id
+
+    # Handle just a handle without URL
+    if not link.startswith('http'):
+        link = link.lstrip('@')
+        return f"@{link}"
+
+    return None
+
+@app.route('/api/fetch-youtube-data', methods=['POST'])
+def fetch_youtube_data():
+    """Fetch channel data from YouTube API."""
+    try:
+        params = request.json or {}
+        channel_link = params.get("channel_link", "").strip()
+
+        if not channel_link:
+            return jsonify({"status": "error", "message": "Channel link is required"}), 400
+
+        # Try to get YouTube API key from environment
+        youtube_api_key = os.getenv('YOUTUBE_API_KEY')
+        if not youtube_api_key:
+            # Fallback to mock data if no API key
+            logging.warning("No YouTube API key found, using mock data")
+            return get_mock_youtube_data(channel_link)
+
+        # Extract channel identifier
+        channel_id = extract_youtube_channel_id(channel_link)
+        if not channel_id:
+            return jsonify({"status": "error", "message": "Invalid YouTube link format"}), 400
+
+        # Fetch from YouTube API
+        youtube_data = fetch_from_youtube_api(channel_id, youtube_api_key)
+
+        if youtube_data:
+            return jsonify({
+                "status": "success",
+                "data": youtube_data
+            })
+        else:
+            return jsonify({"status": "error", "message": "Could not fetch YouTube channel data"}), 404
+
+    except Exception as e:
+        logging.error(f"Fetch YouTube data error: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+def fetch_from_youtube_api(channel_id, api_key):
+    """Fetch channel statistics from YouTube Data API v3."""
+    try:
+        # Build the API request URL
+        url = "https://www.googleapis.com/youtube/v3/channels"
+
+        params = {
+            "key": api_key,
+            "part": "snippet,statistics",
+            "maxResults": 1
+        }
+
+        # Determine if we have a channel ID or need to search by handle
+        if channel_id.startswith('@') or channel_id.startswith('c/'):
+            # Use forUsername or search for custom URL
+            # For custom URLs (@handle), we need to search first
+            search_url = "https://www.googleapis.com/youtube/v3/search"
+            search_params = {
+                "key": api_key,
+                "q": channel_id.lstrip('@'),
+                "type": "channel",
+                "part": "snippet",
+                "maxResults": 1
+            }
+
+            search_response = requests.get(search_url, params=search_params, timeout=10)
+            if search_response.status_code != 200:
+                logging.error(f"YouTube search failed: {search_response.text}")
+                return None
+
+            search_data = search_response.json()
+            if not search_data.get('items'):
+                return None
+
+            channel_id = search_data['items'][0]['id']['channelId']
+
+        # Now fetch the channel statistics
+        params['id'] = channel_id
+
+        response = requests.get(url, params=params, timeout=10)
+
+        if response.status_code != 200:
+            logging.error(f"YouTube API error: {response.text}")
+            return None
+
+        data = response.json()
+
+        if not data.get('items'):
+            return None
+
+        channel = data['items'][0]
+        snippet = channel.get('snippet', {})
+        statistics = channel.get('statistics', {})
+
+        return {
+            "handle": snippet.get('customUrl', '').lstrip('@'),
+            "display_name": snippet.get('title', ''),
+            "follower_count": int(statistics.get('subscriberCount', 0)),
+            "video_count": int(statistics.get('videoCount', 0)),
+            "profile_picture": snippet.get('thumbnails', {}).get('high', {}).get('url', ''),
+            "description": snippet.get('description', '')
+        }
+
+    except requests.exceptions.RequestException as e:
+        logging.error(f"YouTube API request failed: {str(e)}")
+        return None
+
+def get_mock_youtube_data(channel_link):
+    """Return mock YouTube data when API key is not available."""
+    # Extract handle from link
+    handle = parse_channel_link(channel_link)
+
+    mock_data = {
+        "handle": handle,
+        "display_name": f"{handle} Channel",
+        "follower_count": 125000,
+        "video_count": 287,
+        "profile_picture": "https://yt3.ggpht.com/mock",
+        "description": "A crypto and trading education channel"
+    }
+
+    return jsonify({
+        "status": "success",
+        "data": mock_data,
+        "note": "Using mock data (no YouTube API key configured)"
+    })
 
 # Global in-memory database that persists during session
 creators_database = {

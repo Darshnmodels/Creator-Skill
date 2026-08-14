@@ -878,37 +878,55 @@
             const formHtml = `
                 <div style="background: white; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                     <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px;">
-                        <div style="font-size: 32px;">➕</div>
+                        <div style="font-size: 32px;">🎬</div>
                         <div>
-                            <h3 style="font-size: 20px; margin-bottom: 5px;">Channel Not Found</h3>
-                            <p style="color: #666; font-size: 14px;">Let's add this new channel to our database</p>
+                            <h3 style="font-size: 20px; margin-bottom: 5px;">Add New Channel</h3>
+                            <p style="color: #666; font-size: 14px;">YouTube data will be auto-populated</p>
                         </div>
+                    </div>
+
+                    <div style="background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <div style="font-size: 12px; color: #1e40af; font-weight: 600; margin-bottom: 5px;">ℹ️ Auto-Fetch from YouTube</div>
+                        <div style="font-size: 13px; color: #1e40af;">Enter a YouTube channel link or handle and we'll automatically fetch subscriber count, video count, and channel name from YouTube.</div>
                     </div>
 
                     <form id="add-channel-form" style="display: grid; gap: 15px;">
                         <div>
+                            <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #333;">YouTube Channel Link or Handle</label>
+                            <div style="display: grid; grid-template-columns: 1fr auto; gap: 10px;">
+                                <input type="text" id="youtube-link-input" placeholder="e.g., @CreatorHandle or https://youtube.com/@CreatorHandle" value="${suggestedHandle}" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;" required>
+                                <button type="button" onclick="fetchYouTubeData()" class="btn-primary" style="padding: 10px 20px; white-space: nowrap;">🔍 Fetch Data</button>
+                            </div>
+                            <small style="color: #999; display: block; margin-top: 3px;">Click "Fetch Data" to auto-populate fields from YouTube</small>
+                        </div>
+
+                        <div id="youtube-data-status" style="display: none; background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; border-radius: 8px; font-size: 13px; color: #92400e;">
+                            <span id="youtube-status-text">Fetching YouTube data...</span>
+                        </div>
+
+                        <div>
                             <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #333;">Channel Handle / Name</label>
-                            <input type="text" id="new-handle" placeholder="e.g., MyCreatorChannel" value="${suggestedHandle}" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;" required>
+                            <input type="text" id="new-handle" placeholder="Auto-populated from YouTube" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;" required>
                             <small style="color: #999; display: block; margin-top: 3px;">The unique identifier for this channel</small>
                         </div>
 
                         <div>
                             <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #333;">Display Name</label>
-                            <input type="text" id="new-display-name" placeholder="e.g., My Awesome Crypto Channel" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;" required>
+                            <input type="text" id="new-display-name" placeholder="Auto-populated from YouTube" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;" required>
                             <small style="color: #999; display: block; margin-top: 3px;">The full name of the creator/channel</small>
                         </div>
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                             <div>
-                                <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #333;">Follower Count</label>
-                                <input type="number" id="new-followers" placeholder="e.g., 50000" min="0" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;" required>
-                                <small style="color: #999; display: block; margin-top: 3px;">Approximate follower count</small>
+                                <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #333;">Subscriber Count</label>
+                                <input type="number" id="new-followers" placeholder="Auto-populated from YouTube" min="0" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;" required>
+                                <small style="color: #999; display: block; margin-top: 3px;">Fetched from YouTube API</small>
                             </div>
 
                             <div>
-                                <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #333;">Posts/Videos Count</label>
-                                <input type="number" id="new-posts" placeholder="e.g., 250" min="0" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;" required>
-                                <small style="color: #999; display: block; margin-top: 3px;">Total posts or videos published</small>
+                                <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #333;">Total Videos</label>
+                                <input type="number" id="new-posts" placeholder="Auto-populated from YouTube" min="0" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;" required>
+                                <small style="color: #999; display: block; margin-top: 3px;">Fetched from YouTube API</small>
                             </div>
                         </div>
 
@@ -942,6 +960,58 @@
             `;
 
             document.getElementById('evaluate-results').innerHTML = formHtml;
+        }
+
+        // Fetch YouTube channel data
+        async function fetchYouTubeData() {
+            const channelLink = document.getElementById('youtube-link-input').value.trim();
+            if (!channelLink) {
+                showMessage('❌ Please enter a YouTube channel link or handle', 'error');
+                return;
+            }
+
+            try {
+                const statusDiv = document.getElementById('youtube-data-status');
+                const statusText = document.getElementById('youtube-status-text');
+                statusDiv.style.display = 'block';
+                statusText.textContent = '🔍 Fetching YouTube data...';
+
+                const response = await fetch(`${API_BASE}/fetch-youtube-data`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ channel_link: channelLink })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success' && data.data) {
+                    // Auto-populate form fields
+                    document.getElementById('new-handle').value = data.data.handle || '';
+                    document.getElementById('new-display-name').value = data.data.display_name || '';
+                    document.getElementById('new-followers').value = data.data.follower_count || 0;
+                    document.getElementById('new-posts').value = data.data.video_count || 0;
+
+                    statusText.innerHTML = `✅ ${data.data.display_name} loaded! (${data.data.follower_count.toLocaleString()} subscribers, ${data.data.video_count} videos)`;
+                    statusText.style.color = '#065f46';
+                    statusDiv.style.backgroundColor = '#f0fdf4';
+                    statusDiv.style.borderLeftColor = '#10b981';
+
+                    showMessage(`✅ YouTube data loaded for ${data.data.display_name}`, 'success');
+                } else {
+                    statusText.textContent = `⚠️ Could not fetch data: ${data.message}. You can enter data manually.`;
+                    statusText.style.color = '#92400e';
+                    statusDiv.style.backgroundColor = '#fef3c7';
+                    showMessage(`⚠️ ${data.message}`, 'error');
+                }
+            } catch (e) {
+                const statusDiv = document.getElementById('youtube-data-status');
+                const statusText = document.getElementById('youtube-status-text');
+                statusText.textContent = `❌ Error: ${e.message}. Enter data manually.`;
+                statusText.style.color = '#7f1d1d';
+                statusDiv.style.backgroundColor = '#fee2e2';
+                statusDiv.style.borderLeftColor = '#ef4444';
+                showMessage(`❌ Error: ${e.message}`, 'error');
+            }
         }
 
         // Add new channel to database and evaluate
