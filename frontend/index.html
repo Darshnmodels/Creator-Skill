@@ -512,7 +512,7 @@
             }
         }
 
-        // Generate Keywords from Brief
+        // Generate Keywords from Brief (100+ keywords)
         function generateKeywords() {
             const prompt = document.getElementById('hunt_prompt').value.trim();
 
@@ -521,41 +521,132 @@
                 return;
             }
 
-            // Simple keyword generation logic
-            const keywordPatterns = {
-                'crypto': ['crypto trading', 'bitcoin', 'ethereum', 'altcoin', 'cryptocurrency', 'blockchain', 'crypto trader', 'crypto educator'],
-                'equities': ['stock market', 'trading', 'share market', 'stocks', 'equity', 'nifty', 'bse', 'nse'],
-                'forex': ['forex trading', 'currency trading', 'forex trader', 'forex signals', 'currency pairs'],
-                'options': ['options trading', 'f&o trading', 'derivatives', 'options strategies', 'call put'],
-                'fintech': ['fintech', 'financial education', 'investing', 'wealth management', 'personal finance']
+            // Comprehensive keyword database for each vertical
+            const keywordDatabase = {
+                'crypto': [
+                    // Core crypto terms
+                    'crypto trading', 'bitcoin', 'ethereum', 'altcoin', 'cryptocurrency', 'blockchain', 'crypto trader', 'crypto educator',
+                    'bitcoin trading', 'ethereum trading', 'altcoin trading', 'crypto signals', 'trading signals',
+                    'crypto analysis', 'technical analysis', 'fundamental analysis', 'chart analysis', 'price action',
+                    'trading strategy', 'trading strategies', 'scalping', 'swing trading', 'day trading', 'position trading',
+                    'crypto wallet', 'blockchain wallet', 'crypto exchange', 'decentralized exchange', 'dex',
+                    'bitcoin price', 'ethereum price', 'crypto price', 'market analysis', 'market trends',
+                    'crypto news', 'crypto updates', 'market news', 'trading news', 'cryptocurrency news',
+                    'crypto education', 'blockchain education', 'crypto learning', 'trading education', 'trading course',
+                    'defi', 'nft', 'web3', 'metaverse', 'smart contracts', 'staking', 'yield farming',
+                    'crypto portfolio', 'portfolio management', 'risk management', 'money management', 'trading psychology',
+                    'candlestick patterns', 'support resistance', 'trend analysis', 'moving averages', 'rsi', 'macd',
+                    'coinbase', 'binance', 'kraken', 'crypto.com', 'exchange tutorial', 'exchange guide',
+                    'hodl', 'diamond hands', 'paper hands', 'moon', 'bull run', 'bear market', 'correction',
+                    'pump and dump', 'whale watching', 'market manipulation', 'liquidation', 'leverage trading',
+                    'futures trading', 'margin trading', 'short selling', 'long position', 'short position',
+                    'crypto taxes', 'crypto security', 'cold wallet', 'hot wallet', 'seed phrase', 'private key'
+                ],
+                'equities': [
+                    // Stock market terms
+                    'stock market', 'trading', 'share market', 'stocks', 'equity', 'nifty', 'bse', 'nse',
+                    'stock trading', 'day trading', 'swing trading', 'intraday trading', 'position trading',
+                    'stock analysis', 'technical analysis', 'fundamental analysis', 'chart patterns', 'price action',
+                    'stock education', 'stock learning', 'trading course', 'stock market tutorial', 'beginner trading',
+                    'nifty 50', 'sensex', 'stock tips', 'trading tips', 'investment tips', 'stock recommendations',
+                    'support resistance', 'trend analysis', 'moving averages', 'macd', 'rsi', 'stochastic',
+                    'candlestick patterns', 'bullish patterns', 'bearish patterns', 'reversal patterns', 'continuation patterns',
+                    'stock sectors', 'it stocks', 'pharma stocks', 'bank stocks', 'auto stocks', 'energy stocks',
+                    'dividend stocks', 'growth stocks', 'blue chip stocks', 'penny stocks', 'multibagger stocks',
+                    'ipo', 'initial public offering', 'stock listing', 'stock splits', 'bonus shares',
+                    'bull market', 'bear market', 'sideways market', 'market correction', 'market crash',
+                    'portfolio management', 'risk management', 'money management', 'trading psychology', 'discipline',
+                    'brokerage', 'trading platform', 'zerodha', 'angel broking', 'groww', 'upstox',
+                    'mutual funds', 'index funds', 'etf', 'bonds', 'investment options', 'stock brokers'
+                ],
+                'forex': [
+                    // Forex terms
+                    'forex trading', 'currency trading', 'forex trader', 'forex signals', 'currency pairs',
+                    'eurusd', 'gbpusd', 'usdjpy', 'usdchf', 'currency conversion', 'exchange rate',
+                    'forex analysis', 'technical analysis', 'fundamental analysis', 'economic indicators',
+                    'forex education', 'forex learning', 'trading course', 'forex tutorial', 'forex strategy',
+                    'pip', 'spread', 'leverage', 'margin call', 'risk management', 'money management',
+                    'support resistance', 'trend lines', 'moving averages', 'rsi', 'macd', 'stochastic',
+                    'candlestick patterns', 'chart patterns', 'price action', 'market structure', 'supply demand',
+                    'forex broker', 'mt4', 'mt5', 'trading platform', 'chart analysis', 'order types',
+                    'geopolitical events', 'interest rates', 'inflation', 'gdp', 'employment data', 'central bank',
+                    'scalping forex', 'swing trading forex', 'day trading forex', 'carry trade', 'arbitrage',
+                    'forex volatility', 'market hours', 'london session', 'new york session', 'tokyo session',
+                    'currency strength', 'correlation', 'divergence', 'confluence', 'risk reward', 'position sizing'
+                ],
+                'options': [
+                    // Options trading terms
+                    'options trading', 'f&o trading', 'derivatives', 'options strategies', 'call option', 'put option',
+                    'nifty options', 'bank nifty options', 'options education', 'options learning', 'options course',
+                    'call put', 'itm', 'otm', 'atm', 'strike price', 'expiry', 'premium',
+                    'bull call spread', 'bear call spread', 'bull put spread', 'bear put spread', 'iron condor',
+                    'covered call', 'protective put', 'straddle', 'strangle', 'butterfly', 'calendar spread',
+                    'option greeks', 'delta', 'gamma', 'theta', 'vega', 'rho', 'implied volatility',
+                    'options analysis', 'option chain', 'open interest', 'volume', 'volatility smile',
+                    'options brokers', 'options trading platform', 'option calculator', 'options scanner',
+                    'options signals', 'option tips', 'option recommendations', 'weekly options', 'monthly options',
+                    'options risk management', 'position sizing', 'stop loss', 'take profit', 'risk reward',
+                    'options trading psychology', 'discipline', 'patience', 'emotion control',
+                    'nifty trading', 'bank nifty trading', 'option contracts', 'options expiry'
+                ],
+                'fintech': [
+                    // Fintech and finance terms
+                    'fintech', 'financial education', 'investing', 'wealth management', 'personal finance',
+                    'financial literacy', 'money management', 'budgeting', 'saving tips', 'investment tips',
+                    'investment strategies', 'portfolio diversification', 'asset allocation', 'risk assessment',
+                    'stocks', 'bonds', 'mutual funds', 'etf', 'index funds', 'gold', 'real estate',
+                    'financial planning', 'retirement planning', 'insurance', 'tax planning', 'estate planning',
+                    'passive income', 'side hustle', 'freelancing', 'entrepreneurship', 'business ideas',
+                    'cryptocurrency', 'digital payments', 'upi', 'digital wallets', 'mobile banking',
+                    'loan management', 'credit score', 'credit card', 'debt management', 'debt consolidation',
+                    'inflation', 'economic trends', 'interest rates', 'market updates', 'economic news',
+                    'investment psychology', 'behavioral finance', 'emotional investing', 'discipline', 'patience',
+                    'financial independence', 'fire movement', 'wealth building', 'net worth', 'financial goals'
+                ]
             };
 
             // Extract keywords from prompt
             let keywords = [];
             const promptLower = prompt.toLowerCase();
 
-            // Check for vertical match
-            for (let [key, values] of Object.entries(keywordPatterns)) {
-                if (promptLower.includes(key)) {
-                    keywords = [...new Set([...keywords, ...values])];
+            // Check for vertical match and add all relevant keywords
+            for (let [vertical, verticalKeywords] of Object.entries(keywordDatabase)) {
+                if (promptLower.includes(vertical)) {
+                    keywords = [...new Set([...keywords, ...verticalKeywords])];
                 }
             }
 
-            // If no pattern match, use prompt as keywords
+            // If no vertical match, check for individual keywords and infer vertical
+            if (keywords.length === 0) {
+                for (let [vertical, verticalKeywords] of Object.entries(keywordDatabase)) {
+                    for (let keyword of verticalKeywords) {
+                        if (promptLower.includes(keyword)) {
+                            keywords = [...new Set([...keywords, ...verticalKeywords])];
+                            break;
+                        }
+                    }
+                    if (keywords.length > 0) break;
+                }
+            }
+
+            // If still no match, use prompt words as keywords
             if (keywords.length === 0) {
                 keywords = prompt.split(',').map(k => k.trim()).filter(k => k.length > 0);
                 if (keywords.length === 0) {
-                    keywords = prompt.split(' ').filter(w => w.length > 3);
+                    keywords = prompt.split(' ').map(w => w.trim()).filter(w => w.length > 3);
                 }
             }
 
-            // Add language variants
-            if (promptLower.includes('india') || promptLower.includes('hindi')) {
-                keywords.push('hindi trading', 'भारतीय');
+            // Add language variants for India
+            if (promptLower.includes('india') || promptLower.includes('hindi') || promptLower.includes('भारत')) {
+                keywords.push('india', 'hindi', 'indian', 'भारतीय', 'शेयर बाजार', 'क्रिप्टो ट्रेडिंग', 'ट्रेडिंग');
             }
 
-            // Remove duplicates and show
-            generatedKeywords = [...new Set(keywords)].slice(0, 20);
+            // Add platform variants
+            keywords.push('youtube', 'instagram', 'telegram', 'twitter', 'creator', 'influencer', 'educator', 'expert', 'trainer');
+
+            // Remove duplicates and limit to 100+
+            generatedKeywords = [...new Set(keywords)].slice(0, 150);
 
             // Display generated keywords
             const output = document.getElementById('keywords-output');
@@ -566,7 +657,7 @@
                 .join('');
 
             output.style.display = 'block';
-            showMessage(`✅ Generated ${generatedKeywords.length} keywords`, 'success');
+            showMessage(`✅ Generated ${generatedKeywords.length} keywords!`, 'success');
         }
 
         // Hunt Phase
