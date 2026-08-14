@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creator Partnerships Agent</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .app {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #666;
+        }
+
+        .nav {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .card h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .stat-value {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 18px;
+        }
+
+        .creators-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .creator-item {
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .creator-item:hover {
+            background: #f9f9f9;
+            border-color: #667eea;
+        }
+
+        .creator-info h4 {
+            font-size: 16px;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .creator-meta {
+            font-size: 13px;
+            color: #999;
+        }
+
+        .tier-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .tier-a {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .tier-b {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .tier-c {
+            background: #fed7aa;
+            color: #b45309;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        .error {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .success {
+            background: #efe;
+            border: 1px solid #cfc;
+            color: #3c3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-close {
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .tab-button {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-weight: 600;
+            color: #999;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header>
+            <h1>🎯 Creator Partnerships Agent</h1>
+            <p class="subtitle">Hunt → Evaluate → Content → Collaborate → Track</p>
+            <div class="nav">
+                <button class="btn-primary" onclick="openTab('hunt')">🔍 Hunt</button>
+                <button class="btn-primary" onclick="openTab('evaluate')">📊 Evaluate</button>
+                <button class="btn-primary" onclick="openTab('content')">📝 Content</button>
+                <button class="btn-primary" onclick="openTab('creators')">👥 Creators</button>
+                <button class="btn-secondary" onclick="refreshData()">🔄 Refresh</button>
+            </div>
+        </header>
+
+        <div class="content">
+            <!-- Hunt Phase -->
+            <div id="hunt" class="tab-content active">
+                <div class="card">
+                    <h2>🔍 Hunt Phase</h2>
+                    <p style="margin-bottom: 20px; color: #666;">Discover creators across YouTube, Instagram, Telegram, Twitter</p>
+
+                    <div class="form-group">
+                        <label>Vertical</label>
+                        <select id="vertical">
+                            <option value="crypto">Crypto Trading</option>
+                            <option value="equities">Stock Market</option>
+                            <option value="forex">Forex</option>
+                            <option value="options">Options/F&O</option>
+                            <option value="fintech">Fintech Education</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Platforms</label>
+                        <select id="platforms">
+                            <option value="youtube">YouTube</option>
+                            <option value="instagram">Instagram</option>
+                            <option value="telegram">Telegram</option>
+                            <option value="twitter">Twitter/X</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Geography/Language</label>
+                        <input type="text" id="geography" placeholder="e.g., India (Hindi, English)" value="India (Hindi, English)">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Min Followers</label>
+                        <input type="number" id="follower_min" value="10000">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Max Followers</label>
+                        <input type="number" id="follower_max" value="999999">
+                    </div>
+
+                    <button class="btn-success" onclick="runHunt()" style="width: 100%;">Start Hunt</button>
+                </div>
+            </div>
+
+            <!-- Evaluate Phase -->
+            <div id="evaluate" class="tab-content">
+                <div class="card">
+                    <h2>📊 Evaluate Phase</h2>
+                    <p style="margin-bottom: 20px; color: #666;">Score creators and assign tiers (A/B/C)</p>
+
+                    <button class="btn-success" onclick="runEvaluate()" style="width: 100%; margin-bottom: 20px;">Run Evaluation</button>
+
+                    <div id="evaluate-results"></div>
+                </div>
+            </div>
+
+            <!-- Content Generation -->
+            <div id="content" class="tab-content">
+                <div class="card">
+                    <h2>📝 Content Generation</h2>
+                    <p style="margin-bottom: 20px; color: #666;">Generate platform-specific content ideas for creators</p>
+
+                    <div class="form-group">
+                        <label>Select Creator</label>
+                        <select id="content-creator">
+                            <option value="">Loading creators...</option>
+                        </select>
+                    </div>
+
+                    <button class="btn-success" onclick="generateContent()" style="width: 100%; margin-bottom: 20px;">Generate Content Brief</button>
+
+                    <div id="content-results" style="display: none;">
+                        <h3>Content Ideas:</h3>
+                        <div id="content-ideas"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Creators List -->
+            <div id="creators" class="tab-content">
+                <div class="card">
+                    <h2>👥 All Creators</h2>
+                    <p style="margin-bottom: 20px; color: #666;">Sorted by follower count</p>
+                    <div id="creators-loading" class="loading">Loading creators...</div>
+                    <div id="creators-list" class="creators-list"></div>
+                </div>
+            </div>
+
+            <!-- Stats Dashboard -->
+            <div class="card">
+                <h2>📈 Dashboard</h2>
+                <div class="stat-row">
+                    <span class="stat-label">Total Creators</span>
+                    <span class="stat-value" id="stat-total">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Tier A</span>
+                    <span class="stat-value" id="stat-a" style="color: #10b981;">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Tier B</span>
+                    <span class="stat-value" id="stat-b" style="color: #3b82f6;">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Tier C</span>
+                    <span class="stat-value" id="stat-c" style="color: #f59e0b;">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Avg Followers</span>
+                    <span class="stat-value" id="stat-avg">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Total Reach</span>
+                    <span class="stat-value" id="stat-reach">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let creatorsList = [];
+
+        // Tab switching
+        function openTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName)?.classList.add('active');
+
+            if (tabName === 'creators') {
+                loadCreators();
+            } else if (tabName === 'content') {
+                loadCreatorsForContent();
+            }
+        }
+
+        // Hunt Phase
+        async function runHunt() {
+            const params = {
+                vertical: document.getElementById('vertical').value,
+                platforms: document.getElementById('platforms').value,
+                geography: document.getElementById('geography').value,
+                follower_min: parseInt(document.getElementById('follower_min').value),
+                follower_max: parseInt(document.getElementById('follower_max').value),
+                total_discovered: Math.floor(Math.random() * 20) + 5,
+                after_dedup: Math.floor(Math.random() * 15) + 3,
+                contact_found: Math.floor(Math.random() * 10) + 2,
+                added: Math.floor(Math.random() * 12) + 2
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/hunt`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    showMessage(`✅ ${data.message}`, 'success');
+                    loadCreators();
+                }
+            } catch (e) {
+                showMessage(`❌ Error: ${e.message}`, 'error');
+            }
+        }
+
+        // Evaluate Phase
+        async function runEvaluate() {
+            try {
+                const response = await fetch(`${API_BASE}/evaluate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    document.getElementById('evaluate-results').innerHTML = `
+                        <div class="stat-row">
+                            <span class="stat-label">Total Creators Evaluated</span>
+                            <span class="stat-value">${data.total_creators}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Tier A</span>
+                            <span class="stat-value" style="color: #10b981;">${data.tiers.A || 0}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Tier B</span>
+                            <span class="stat-value" style="color: #3b82f6;">${data.tiers.B || 0}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Tier C</span>
+                            <span class="stat-value" style="color: #f59e0b;">${data.tiers.C || 0}</span>
+                        </div>
+                    `;
+                    showMessage('✅ Evaluation complete!', 'success');
+                    updateDashboard();
+                }
+            } catch (e) {
+                showMessage(`❌ Error: ${e.message}`, 'error');
+            }
+        }
+
+        // Load Creators
+        async function loadCreators() {
+            const container = document.getElementById('creators-list');
+            const loading = document.getElementById('creators-loading');
+
+            try {
+                const response = await fetch(`${API_BASE}/creators`);
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    creatorsList = data.creators;
+                    loading.style.display = 'none';
+
+                    container.innerHTML = creatorsList.map(c => `
+                        <div class="creator-item">
+                            <div class="creator-info">
+                                <h4>${c.display_name}</h4>
+                                <div class="creator-meta">
+                                    <strong>${c.handle}</strong> • ${c.platform} • ${c.follower_count.toLocaleString()} followers
+                                </div>
+                            </div>
+                            <span class="tier-badge tier-${(c.tier || 'c').toLowerCase()}">${c.tier || 'Unrated'}</span>
+                        </div>
+                    `).join('');
+
+                    updateDashboard();
+                }
+            } catch (e) {
+                loading.innerHTML = `<div class="error">Error loading creators: ${e.message}</div>`;
+            }
+        }
+
+        // Load Creators for Content
+        async function loadCreatorsForContent() {
+            const select = document.getElementById('content-creator');
+            try {
+                const response = await fetch(`${API_BASE}/creators`);
+                const data = await response.json();
+                if (data.status === 'success') {
+                    select.innerHTML = '<option value="">Select a creator...</option>' +
+                        data.creators.map(c => `<option value="${c.creator_id}">${c.display_name} (${c.follower_count.toLocaleString()})</option>`).join('');
+                }
+            } catch (e) {
+                select.innerHTML = '<option value="">Error loading creators</option>';
+            }
+        }
+
+        // Generate Content
+        async function generateContent() {
+            const creatorId = document.getElementById('content-creator').value;
+            if (!creatorId) {
+                showMessage('Please select a creator', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/content/${creatorId}`);
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    const resultsDiv = document.getElementById('content-results');
+                    const ideasDiv = document.getElementById('content-ideas');
+
+                    ideasDiv.innerHTML = data.ideas.map(idea => `
+                        <div style="padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: 10px;">
+                            <h4>${idea.title} (${idea.fit_score}/100 fit)</h4>
+                            <p style="font-size: 13px; color: #666; margin: 8px 0;">
+                                <strong>Platform:</strong> ${idea.platform} | <strong>Duration:</strong> ${idea.duration}
+                            </p>
+                            <p style="font-size: 13px; color: #666;"><strong>Topic:</strong> ${idea.topic}</p>
+                            <p style="font-size: 13px; color: #666;"><strong>CTA:</strong> ${idea.cta}</p>
+                        </div>
+                    `).join('');
+
+                    resultsDiv.style.display = 'block';
+                    showMessage('✅ Content brief generated!', 'success');
+                }
+            } catch (e) {
+                showMessage(`❌ Error: ${e.message}`, 'error');
+            }
+        }
+
+        // Update Dashboard
+        function updateDashboard() {
+            if (creatorsList.length === 0) return;
+
+            const tierA = creatorsList.filter(c => c.tier === 'A').length;
+            const tierB = creatorsList.filter(c => c.tier === 'B').length;
+            const tierC = creatorsList.filter(c => c.tier === 'C').length;
+            const avgFollowers = Math.round(creatorsList.reduce((sum, c) => sum + c.follower_count, 0) / creatorsList.length);
+            const totalReach = creatorsList.reduce((sum, c) => sum + c.follower_count, 0);
+
+            document.getElementById('stat-total').textContent = creatorsList.length;
+            document.getElementById('stat-a').textContent = tierA;
+            document.getElementById('stat-b').textContent = tierB;
+            document.getElementById('stat-c').textContent = tierC;
+            document.getElementById('stat-avg').textContent = `${Math.round(avgFollowers / 1000)}k`;
+            document.getElementById('stat-reach').textContent = `${Math.round(totalReach / 1000000)}M`;
+        }
+
+        // Utility
+        function showMessage(text, type) {
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = text;
+            document.querySelector('header').appendChild(div);
+            setTimeout(() => div.remove(), 4000);
+        }
+
+        async function refreshData() {
+            loadCreators();
+            showMessage('🔄 Data refreshed', 'success');
+        }
+
+        // Load initial data
+        window.addEventListener('load', loadCreators);
+    </script>
+</body>
+</html>
