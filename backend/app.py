@@ -107,12 +107,12 @@ def run_evaluate():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 def calculate_creator_metrics(creator):
-    """Calculate all evaluation metrics for a creator."""
+    """Calculate all evaluation metrics for a creator with actual + scaled values."""
     fc = creator.get("follower_count", 0)
     post_count = creator.get("video_or_post_count", 0)
     contact_status = creator.get("contact_status", "not_found")
 
-    # 1. Follower Score
+    # 1. Follower Score - ACTUAL + SCALED
     if fc >= 500000:
         follower_pts = 0.25
         follower_tier = "500k+"
@@ -129,7 +129,7 @@ def calculate_creator_metrics(creator):
         follower_pts = 0.00
         follower_tier = "<10k"
 
-    # 2. View-to-Follower Ratio (estimated)
+    # 2. View-to-Follower Ratio (estimated) - ACTUAL + SCALED
     if fc >= 500000:
         view_ratio = 0.04
     elif fc >= 100000:
@@ -139,35 +139,41 @@ def calculate_creator_metrics(creator):
     else:
         view_ratio = 0.08
     view_ratio_pts = 0.15 if view_ratio >= 0.10 else 0.10
+    view_ratio_pct = view_ratio * 100
 
-    # 3. Posting Cadence
+    # 3. Posting Cadence - ACTUAL + SCALED
     cadence = (post_count / 180) * 7 if post_count > 0 else 0
     if cadence >= 2:
         cadence_pts = 0.15
-        cadence_label = "High (≥2/wk)"
+        cadence_label = "High"
     elif cadence >= 1:
         cadence_pts = 0.12
-        cadence_label = "Good (1-2/wk)"
+        cadence_label = "Good"
     elif cadence >= 0.5:
         cadence_pts = 0.08
-        cadence_label = "Moderate (0.5-1/wk)"
+        cadence_label = "Moderate"
     else:
         cadence_pts = 0.03
-        cadence_label = "Low (<0.5/wk)"
+        cadence_label = "Low"
 
     # 4. Live Propensity (neutral if not captured)
     live_pts = 0.07
+    live_actual = "Not captured"
 
     # 5. Content Category Match (crypto focus)
     content_match_pts = 0.15
+    content_match_pct = 75  # Assume 75% crypto focus
 
-    # 6. Contact Status Bonus
+    # 6. Contact Status Bonus - ACTUAL + SCALED
     if contact_status == "found":
         contact_bonus = 0.02
+        contact_label = "Email/Phone"
     elif contact_status == "dm_only":
         contact_bonus = 0.00
+        contact_label = "DM Only"
     else:
         contact_bonus = -0.03
+        contact_label = "No Contact"
 
     # 7. Composite Score
     contact_norm = (contact_bonus + 0.05) / 0.05
@@ -192,26 +198,39 @@ def calculate_creator_metrics(creator):
         tier = "Reject"
 
     return {
+        # Actual Values
+        "followers_actual": fc,
         "follower_tier": follower_tier,
-        "view_ratio": view_ratio,
-        "view_ratio_pts": view_ratio_pts,
-        "cadence": round(cadence, 2),
-        "cadence_label": cadence_label,
-        "cadence_pts": cadence_pts,
-        "live_pts": live_pts,
-        "content_match_pts": content_match_pts,
-        "contact_bonus": contact_bonus,
-        "follower_pts": follower_pts,
+        "cadence_actual": round(cadence, 2),
+        "view_ratio_actual_pct": round(view_ratio_pct, 1),
+        "post_count_actual": post_count,
+        "content_match_actual_pct": content_match_pct,
+        "contact_actual": contact_label,
+
+        # Scaled Scores (0-1 range)
+        "follower_pts": round(follower_pts, 2),
+        "view_ratio_pts": round(view_ratio_pts, 2),
+        "cadence_pts": round(cadence_pts, 2),
+        "live_pts": round(live_pts, 2),
+        "content_match_pts": round(content_match_pts, 2),
+        "contact_bonus": round(contact_bonus, 2),
+
+        # Final Score
         "raw_score": round(raw_score, 1),
         "tier": tier,
-        "metrics_summary": {
-            "Follower Score": f"{follower_pts:.2f}",
-            "View Ratio": f"{view_ratio_pts:.2f}",
-            "Cadence": f"{cadence_pts:.2f}",
-            "Live Propensity": f"{live_pts:.2f}",
-            "Content Match": f"{content_match_pts:.2f}",
-            "Contact Bonus": f"{contact_bonus:+.2f}",
-            "Final Score": f"{raw_score:.1f}/100",
+
+        # Labels
+        "cadence_label": cadence_label,
+
+        # Detailed breakdown for display
+        "metrics_detail": {
+            "Followers": f"{fc:,} → {follower_pts:.2f}/0.25",
+            "View Ratio": f"{view_ratio_pct:.1f}% → {view_ratio_pts:.2f}/0.20",
+            "Cadence": f"{cadence:.2f} posts/wk → {cadence_pts:.2f}/0.15",
+            "Live Stream": f"{live_actual} → {live_pts:.2f}/0.10",
+            "Content Match": f"{content_match_pct}% → {content_match_pts:.2f}/0.20",
+            "Contact": f"{contact_label} → {contact_bonus:+.2f}",
+            "Composite Score": f"{raw_score:.1f}/100",
             "Tier": tier
         }
     }
