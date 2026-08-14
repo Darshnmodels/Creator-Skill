@@ -175,40 +175,92 @@ def parse_channel_link(link):
 
     return link
 
-def get_creator_by_handle(handle):
-    """Get creator data by handle. In production, query from Google Sheets."""
-    # Sample database
-    creators_db = {
-        "bitcoinboyz_in": {
-            "creator_id": "1", "handle": "BitcoinBoyz_IN", "display_name": "Bitcoin Boyz India",
-            "platform": "YouTube", "follower_count": 156000, "video_or_post_count": 521,
-            "contact_status": "found", "profile_url": "https://youtube.com/@BitcoinBoyz_IN"
-        },
-        "cryptotradingwithrahul": {
-            "creator_id": "2", "handle": "CryptoTradingWithRahul", "display_name": "Rahul Crypto Trading",
-            "platform": "YouTube", "follower_count": 125000, "video_or_post_count": 487,
-            "contact_status": "found", "profile_url": "https://youtube.com/@CryptoTradingWithRahul"
-        },
-        "tradingwithvinay": {
-            "creator_id": "3", "handle": "TradingWithVinay", "display_name": "Vinay - The Trader",
-            "platform": "YouTube", "follower_count": 87500, "video_or_post_count": 342,
-            "contact_status": "found", "profile_url": "https://youtube.com/@TradingWithVinay"
-        },
-        "deeptradingsignals": {
-            "creator_id": "4", "handle": "DeepTradingSignals", "display_name": "Deep Trading Signals",
-            "platform": "YouTube", "follower_count": 67800, "video_or_post_count": 289,
-            "contact_status": "dm_only", "profile_url": "https://youtube.com/@DeepTradingSignals"
-        },
-        "cryptoedu_india": {
-            "creator_id": "5", "handle": "CryptoEdu_India", "display_name": "Crypto Education Hub",
-            "platform": "YouTube", "follower_count": 45000, "video_or_post_count": 156,
-            "contact_status": "not_found", "profile_url": "https://youtube.com/@CryptoEdu_India"
-        }
+# Global in-memory database that persists during session
+creators_database = {
+    "bitcoinboyz_in": {
+        "creator_id": "1", "handle": "BitcoinBoyz_IN", "display_name": "Bitcoin Boyz India",
+        "platform": "YouTube", "follower_count": 156000, "video_or_post_count": 521,
+        "contact_status": "found", "profile_url": "https://youtube.com/@BitcoinBoyz_IN"
+    },
+    "cryptotradingwithrahul": {
+        "creator_id": "2", "handle": "CryptoTradingWithRahul", "display_name": "Rahul Crypto Trading",
+        "platform": "YouTube", "follower_count": 125000, "video_or_post_count": 487,
+        "contact_status": "found", "profile_url": "https://youtube.com/@CryptoTradingWithRahul"
+    },
+    "tradingwithvinay": {
+        "creator_id": "3", "handle": "TradingWithVinay", "display_name": "Vinay - The Trader",
+        "platform": "YouTube", "follower_count": 87500, "video_or_post_count": 342,
+        "contact_status": "found", "profile_url": "https://youtube.com/@TradingWithVinay"
+    },
+    "deeptradingsignals": {
+        "creator_id": "4", "handle": "DeepTradingSignals", "display_name": "Deep Trading Signals",
+        "platform": "YouTube", "follower_count": 67800, "video_or_post_count": 289,
+        "contact_status": "dm_only", "profile_url": "https://youtube.com/@DeepTradingSignals"
+    },
+    "cryptoedu_india": {
+        "creator_id": "5", "handle": "CryptoEdu_India", "display_name": "Crypto Education Hub",
+        "platform": "YouTube", "follower_count": 45000, "video_or_post_count": 156,
+        "contact_status": "not_found", "profile_url": "https://youtube.com/@CryptoEdu_India"
     }
+}
 
-    # Look up the handle (case-insensitive)
+def get_creator_by_handle(handle):
+    """Get creator data by handle. Returns None if not found."""
     key = handle.lower().replace('@', '')
-    return creators_db.get(key)
+    return creators_database.get(key)
+
+@app.route('/api/add-creator', methods=['POST'])
+def add_creator():
+    """Add a new creator to the database."""
+    try:
+        params = request.json or {}
+
+        required_fields = ['handle', 'display_name', 'follower_count', 'platform']
+        for field in required_fields:
+            if not params.get(field):
+                return jsonify({"status": "error", "message": f"Missing required field: {field}"}), 400
+
+        handle = params.get('handle', '').strip()
+        display_name = params.get('display_name', '').strip()
+        follower_count = int(params.get('follower_count', 0))
+        video_or_post_count = int(params.get('video_or_post_count', 0))
+        platform = params.get('platform', 'YouTube').strip()
+        contact_status = params.get('contact_status', 'not_found').strip()
+
+        # Check if creator already exists
+        key = handle.lower().replace('@', '')
+        if key in creators_database:
+            return jsonify({"status": "error", "message": f"Creator '{handle}' already exists in database"}), 409
+
+        # Create new creator object
+        new_creator = {
+            "creator_id": str(uuid.uuid4()),
+            "handle": handle,
+            "display_name": display_name,
+            "platform": platform,
+            "follower_count": follower_count,
+            "video_or_post_count": video_or_post_count,
+            "contact_status": contact_status,
+            "profile_url": f"https://{platform.lower()}.com/@{handle}" if platform == "YouTube" else f"https://{platform.lower()}.com/{handle}"
+        }
+
+        # Add to database
+        creators_database[key] = new_creator
+
+        # Calculate metrics
+        metrics = calculate_creator_metrics(new_creator)
+        result = {**new_creator, **metrics}
+
+        return jsonify({
+            "status": "success",
+            "creator": result,
+            "message": f"✅ New creator '{display_name}' added to database! Score: {result['raw_score']}/100 (Tier {result['tier']})"
+        })
+    except ValueError as e:
+        return jsonify({"status": "error", "message": f"Invalid input: {str(e)}"}), 400
+    except Exception as e:
+        logging.error(f"Add creator error: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 def calculate_creator_metrics(creator):
     """Calculate all evaluation metrics for a creator with actual + scaled values."""

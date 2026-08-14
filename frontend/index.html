@@ -871,6 +871,218 @@
             }
         }
 
+        // Show form to add new channel
+        function showAddChannelForm(suggestedHandle) {
+            document.getElementById('evaluate-results').style.display = 'block';
+
+            const formHtml = `
+                <div style="background: white; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px;">
+                        <div style="font-size: 32px;">➕</div>
+                        <div>
+                            <h3 style="font-size: 20px; margin-bottom: 5px;">Channel Not Found</h3>
+                            <p style="color: #666; font-size: 14px;">Let's add this new channel to our database</p>
+                        </div>
+                    </div>
+
+                    <form id="add-channel-form" style="display: grid; gap: 15px;">
+                        <div>
+                            <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #333;">Channel Handle / Name</label>
+                            <input type="text" id="new-handle" placeholder="e.g., MyCreatorChannel" value="${suggestedHandle}" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;" required>
+                            <small style="color: #999; display: block; margin-top: 3px;">The unique identifier for this channel</small>
+                        </div>
+
+                        <div>
+                            <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #333;">Display Name</label>
+                            <input type="text" id="new-display-name" placeholder="e.g., My Awesome Crypto Channel" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;" required>
+                            <small style="color: #999; display: block; margin-top: 3px;">The full name of the creator/channel</small>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div>
+                                <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #333;">Follower Count</label>
+                                <input type="number" id="new-followers" placeholder="e.g., 50000" min="0" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;" required>
+                                <small style="color: #999; display: block; margin-top: 3px;">Approximate follower count</small>
+                            </div>
+
+                            <div>
+                                <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #333;">Posts/Videos Count</label>
+                                <input type="number" id="new-posts" placeholder="e.g., 250" min="0" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;" required>
+                                <small style="color: #999; display: block; margin-top: 3px;">Total posts or videos published</small>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div>
+                                <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #333;">Platform</label>
+                                <select id="new-platform" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;" required>
+                                    <option value="YouTube">YouTube</option>
+                                    <option value="Instagram">Instagram</option>
+                                    <option value="Telegram">Telegram</option>
+                                    <option value="Twitter">Twitter / X</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #333;">Contact Status</label>
+                                <select id="new-contact" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;" required>
+                                    <option value="found">Email/Phone Found ✅</option>
+                                    <option value="dm_only">DM Only ⚠️</option>
+                                    <option value="not_found">No Contact ❌</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
+                            <button type="button" onclick="document.getElementById('channel-link').value = ''; document.getElementById('evaluate-results').style.display = 'none';" class="btn-secondary" style="width: 100%; padding: 12px;">Cancel</button>
+                            <button type="button" onclick="addNewChannel()" class="btn-success" style="width: 100%; padding: 12px;">➕ Add Channel & Evaluate</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+
+            document.getElementById('evaluate-results').innerHTML = formHtml;
+        }
+
+        // Add new channel to database and evaluate
+        async function addNewChannel() {
+            const handle = document.getElementById('new-handle').value.trim();
+            const displayName = document.getElementById('new-display-name').value.trim();
+            const followers = parseInt(document.getElementById('new-followers').value);
+            const posts = parseInt(document.getElementById('new-posts').value);
+            const platform = document.getElementById('new-platform').value;
+            const contact = document.getElementById('new-contact').value;
+
+            if (!handle || !displayName || !followers || !posts) {
+                showMessage('❌ Please fill in all fields', 'error');
+                return;
+            }
+
+            try {
+                showMessage('➕ Adding channel to database...', 'success');
+
+                const response = await fetch(`${API_BASE}/add-creator`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        handle: handle,
+                        display_name: displayName,
+                        follower_count: followers,
+                        video_or_post_count: posts,
+                        platform: platform,
+                        contact_status: contact
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success' && data.creator) {
+                    // Display the newly evaluated creator
+                    displayEvaluatedChannel(data.creator);
+                    document.getElementById('channel-link').value = '';
+                    showMessage(`✅ ${data.message}`, 'success');
+                } else {
+                    showMessage(`❌ ${data.message || 'Failed to add channel'}`, 'error');
+                }
+            } catch (e) {
+                showMessage(`❌ Error: ${e.message}`, 'error');
+            }
+        }
+
+        // Display evaluated channel result
+        function displayEvaluatedChannel(c) {
+            const tierColor = c.tier === 'A' ? '#10b981' : c.tier === 'B' ? '#3b82f6' : c.tier === 'C' ? '#f59e0b' : '#999';
+            const bgColor = c.tier === 'A' ? '#f0fdf4' : c.tier === 'B' ? '#f0f9ff' : c.tier === 'C' ? '#fffbeb' : 'white';
+
+            const metricsHtml = `
+                <div style="background: white; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                        <div>
+                            <h3 style="font-size: 24px; margin-bottom: 5px;">${c.display_name}</h3>
+                            <p style="color: #666; font-size: 14px;">@${c.handle} • ${c.platform || 'Creator'}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 48px; font-weight: bold; color: ${tierColor};">${c.raw_score}</div>
+                            <div style="font-size: 14px; color: #666;">/100</div>
+                            <div style="font-size: 24px; margin-top: 10px; color: ${tierColor};">Tier ${c.tier} ${c.tier === 'A' ? '⭐' : ''}</div>
+                        </div>
+                    </div>
+
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #eee; background: #f9f9f9;">
+                                <th style="padding: 12px; text-align: left; font-weight: 600; color: #333;">Metric</th>
+                                <th style="padding: 12px; text-align: center; font-weight: 600; color: #333;">Actual Value</th>
+                                <th style="padding: 12px; text-align: center; font-weight: 600; color: #333;">Scaled Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom: 1px solid #eee;">
+                                <td style="padding: 12px; font-weight: 600;">Followers</td>
+                                <td style="padding: 12px; text-align: center; color: #667eea; font-weight: bold;">${(c.followers_actual / 1000).toFixed(0)}k</td>
+                                <td style="padding: 12px; text-align: center; color: #999;"><strong style="color: #333;">${c.follower_pts.toFixed(2)}</strong> / 0.25</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #eee;">
+                                <td style="padding: 12px; font-weight: 600;">View Ratio</td>
+                                <td style="padding: 12px; text-align: center; color: #667eea; font-weight: bold;">${c.view_ratio_actual_pct.toFixed(1)}%</td>
+                                <td style="padding: 12px; text-align: center; color: #999;"><strong style="color: #333;">${c.view_ratio_pts.toFixed(2)}</strong> / 0.20</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #eee;">
+                                <td style="padding: 12px; font-weight: 600;">Posting Cadence</td>
+                                <td style="padding: 12px; text-align: center; color: #667eea; font-weight: bold;">${c.cadence_actual.toFixed(2)} posts/week</td>
+                                <td style="padding: 12px; text-align: center; color: #999;"><strong style="color: #333;">${c.cadence_pts.toFixed(2)}</strong> / 0.15</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #eee;">
+                                <td style="padding: 12px; font-weight: 600;">Live Stream Propensity</td>
+                                <td style="padding: 12px; text-align: center; color: #667eea; font-weight: bold;">${c.live_actual || 'Not captured'}</td>
+                                <td style="padding: 12px; text-align: center; color: #999;"><strong style="color: #333;">${c.live_pts.toFixed(2)}</strong> / 0.10</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #eee;">
+                                <td style="padding: 12px; font-weight: 600;">Content Category Match</td>
+                                <td style="padding: 12px; text-align: center; color: #667eea; font-weight: bold;">${c.content_match_actual_pct}%</td>
+                                <td style="padding: 12px; text-align: center; color: #999;"><strong style="color: #333;">${c.content_match_pts.toFixed(2)}</strong> / 0.20</td>
+                            </tr>
+                            <tr style="background: #f9f9f9;">
+                                <td style="padding: 12px; font-weight: 600;">Contact Status</td>
+                                <td style="padding: 12px; text-align: center; color: #667eea; font-weight: bold;">${c.contact_actual}</td>
+                                <td style="padding: 12px; text-align: center; color: #999;"><strong style="color: #333;">${c.contact_bonus > 0 ? '✅' : c.contact_bonus < 0 ? '❌' : '⚠️'} ${c.contact_bonus >= 0 ? '+' : ''}${c.contact_bonus.toFixed(2)}</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
+                        <div style="background: #f0fdf4; border-left: 4px solid #10b981; padding: 15px; border-radius: 8px;">
+                            <div style="font-size: 12px; color: #666; margin-bottom: 5px;">TIER ASSIGNMENT</div>
+                            <div style="font-size: 18px; font-weight: bold; color: #10b981;">Tier ${c.tier}</div>
+                            <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                                ${c.tier === 'A' ? 'Premium creator with strong metrics' :
+                                  c.tier === 'B' ? 'Good creator with solid engagement' :
+                                  c.tier === 'C' ? 'Emerging creator with potential' :
+                                  'Below partnership threshold'}
+                            </div>
+                        </div>
+                        <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; border-radius: 8px;">
+                            <div style="font-size: 12px; color: #666; margin-bottom: 5px;">RECOMMENDATION</div>
+                            <div style="font-size: 16px; font-weight: bold; color: #3b82f6;">
+                                ${c.tier === 'A' ? '✅ Priority Partner' :
+                                  c.tier === 'B' ? '👍 Good Fit' :
+                                  c.tier === 'C' ? '⏳ Monitor' :
+                                  '❌ Not Recommended'}
+                            </div>
+                            <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                                ${c.tier === 'A' ? 'Ready for immediate collaboration' :
+                                  c.tier === 'B' ? 'Suitable for partnerships with support' :
+                                  c.tier === 'C' ? 'Track growth before engagement' :
+                                  'Does not meet partnership criteria'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('evaluate-results').innerHTML = metricsHtml;
+        }
+
         // Switch between Bulk and Single Channel evaluation tabs
         function switchEvalTab(tab) {
             const bulkTab = document.getElementById('bulk-tab');
@@ -912,6 +1124,12 @@
                     body: JSON.stringify({ channel_link: link })
                 });
                 const data = await response.json();
+
+                // If channel not found, show add form
+                if (data.status === 'error' && data.message.includes('not found')) {
+                    showAddChannelForm(link);
+                    return;
+                }
 
                 if (data.status === 'success' && data.creator) {
                     // Show results
