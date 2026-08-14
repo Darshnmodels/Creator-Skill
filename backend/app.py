@@ -425,16 +425,19 @@ def calculate_creator_metrics(creator):
         follower_pts = 0.25
         follower_tier = "500k+"
     elif fc >= 100000:
-        follower_pts = 0.20
+        follower_pts = 0.22
         follower_tier = "100k-500k"
+    elif fc >= 50000:
+        follower_pts = 0.18
+        follower_tier = "50k-100k"
     elif fc >= 25000:
-        follower_pts = 0.15
-        follower_tier = "25k-100k"
+        follower_pts = 0.12
+        follower_tier = "25k-50k"
     elif fc >= 10000:
-        follower_pts = 0.08
+        follower_pts = 0.06
         follower_tier = "10k-25k"
     else:
-        follower_pts = 0.00
+        follower_pts = 0.02
         follower_tier = "<10k"
 
     # 2. View-to-Follower Ratio (estimated) - ACTUAL + SCALED
@@ -496,11 +499,11 @@ def calculate_creator_metrics(creator):
     raw_score = score * 100
 
     # 8. Tier Assignment
-    if raw_score >= 75:
+    if raw_score >= 80:
         tier = "A"
-    elif raw_score >= 55:
+    elif raw_score >= 65:
         tier = "B"
-    elif raw_score >= 35:
+    elif raw_score >= 50:
         tier = "C"
     else:
         tier = "Reject"
