@@ -346,6 +346,17 @@
                     <p style="margin-bottom: 20px; color: #666;">Discover creators across YouTube, Instagram, Telegram, Twitter</p>
 
                     <div class="form-group">
+                        <label>📝 Brief/Keywords (Generate Keywords)</label>
+                        <textarea id="hunt_prompt" placeholder="e.g., 'Indian crypto traders teaching Bitcoin strategy' or list keywords like 'crypto trading, bitcoin, ethereum'" style="min-height: 80px;"></textarea>
+                        <button class="btn-secondary" onclick="generateKeywords()" style="width: 100%; margin-top: 10px;">🔑 Generate Keywords from Brief</button>
+                    </div>
+
+                    <div id="keywords-output" style="display: none; margin-bottom: 20px; padding: 15px; background: #f0f7ff; border-radius: 8px; border-left: 4px solid #667eea;">
+                        <strong style="color: #667eea;">Generated Keywords:</strong>
+                        <div id="keywords-list" style="margin-top: 10px; font-size: 13px; color: #555;"></div>
+                    </div>
+
+                    <div class="form-group">
                         <label>Vertical</label>
                         <select id="vertical">
                             <option value="crypto">Crypto Trading</option>
@@ -381,7 +392,7 @@
                         <input type="number" id="follower_max" value="999999">
                     </div>
 
-                    <button class="btn-success" onclick="runHunt()" style="width: 100%;">Start Hunt</button>
+                    <button class="btn-success" onclick="runHunt()" style="width: 100%;">🚀 Start Hunt</button>
                 </div>
             </div>
 
@@ -463,6 +474,7 @@
     <script>
         const API_BASE = '/api';
         let creatorsList = [];
+        let generatedKeywords = [];
 
         // Tab switching
         function openTab(tabName) {
@@ -474,6 +486,63 @@
             } else if (tabName === 'content') {
                 loadCreatorsForContent();
             }
+        }
+
+        // Generate Keywords from Brief
+        function generateKeywords() {
+            const prompt = document.getElementById('hunt_prompt').value.trim();
+
+            if (!prompt) {
+                showMessage('Please enter a brief or keywords', 'error');
+                return;
+            }
+
+            // Simple keyword generation logic
+            const keywordPatterns = {
+                'crypto': ['crypto trading', 'bitcoin', 'ethereum', 'altcoin', 'cryptocurrency', 'blockchain', 'crypto trader', 'crypto educator'],
+                'equities': ['stock market', 'trading', 'share market', 'stocks', 'equity', 'nifty', 'bse', 'nse'],
+                'forex': ['forex trading', 'currency trading', 'forex trader', 'forex signals', 'currency pairs'],
+                'options': ['options trading', 'f&o trading', 'derivatives', 'options strategies', 'call put'],
+                'fintech': ['fintech', 'financial education', 'investing', 'wealth management', 'personal finance']
+            };
+
+            // Extract keywords from prompt
+            let keywords = [];
+            const promptLower = prompt.toLowerCase();
+
+            // Check for vertical match
+            for (let [key, values] of Object.entries(keywordPatterns)) {
+                if (promptLower.includes(key)) {
+                    keywords = [...new Set([...keywords, ...values])];
+                }
+            }
+
+            // If no pattern match, use prompt as keywords
+            if (keywords.length === 0) {
+                keywords = prompt.split(',').map(k => k.trim()).filter(k => k.length > 0);
+                if (keywords.length === 0) {
+                    keywords = prompt.split(' ').filter(w => w.length > 3);
+                }
+            }
+
+            // Add language variants
+            if (promptLower.includes('india') || promptLower.includes('hindi')) {
+                keywords.push('hindi trading', 'भारतीय');
+            }
+
+            // Remove duplicates and show
+            generatedKeywords = [...new Set(keywords)].slice(0, 20);
+
+            // Display generated keywords
+            const output = document.getElementById('keywords-output');
+            const list = document.getElementById('keywords-list');
+
+            list.innerHTML = generatedKeywords
+                .map(kw => `<span style="display: inline-block; background: #667eea; color: white; padding: 5px 10px; margin: 3px; border-radius: 4px; font-size: 12px;">${kw}</span>`)
+                .join('');
+
+            output.style.display = 'block';
+            showMessage(`✅ Generated ${generatedKeywords.length} keywords`, 'success');
         }
 
         // Hunt Phase
