@@ -8,7 +8,11 @@ from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 import logging
 
-app = Flask(__name__, static_folder='../frontend/build', static_url_path='')
+# Determine base directory
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_DIR = os.path.join(BASE_DIR, '..', 'frontend')
+
+app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path='')
 CORS(app)
 logging.basicConfig(level=logging.INFO)
 
@@ -269,15 +273,21 @@ def health():
 
 @app.route('/')
 def serve_frontend():
-    """Serve React frontend."""
-    return send_from_directory(app.static_folder, 'index.html')
+    """Serve frontend."""
+    try:
+        return send_from_directory(FRONTEND_DIR, 'index.html')
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Frontend not found: {str(e)}"}), 500
 
 @app.errorhandler(404)
 def not_found(e):
-    """Handle 404 by serving index.html for React routing."""
+    """Handle 404 by serving index.html for routing."""
     if request.path.startswith('/api'):
         return jsonify({"status": "error", "message": "Not found"}), 404
-    return send_from_directory(app.static_folder, 'index.html')
+    try:
+        return send_from_directory(FRONTEND_DIR, 'index.html')
+    except:
+        return jsonify({"status": "error", "message": "Frontend not found"}), 500
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
