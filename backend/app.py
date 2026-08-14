@@ -106,6 +106,110 @@ def run_evaluate():
         logging.error(f"Evaluate error: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
+# ============================================================================
+# EVALUATE SINGLE CHANNEL
+# ============================================================================
+
+@app.route('/api/evaluate-channel', methods=['POST'])
+def evaluate_single_channel():
+    """Evaluate a single channel by link or handle."""
+    try:
+        params = request.json or {}
+        channel_link = params.get("channel_link", "").strip()
+
+        if not channel_link:
+            return jsonify({"status": "error", "message": "Channel link or handle is required"}), 400
+
+        # Parse the channel link to extract handle
+        handle = parse_channel_link(channel_link)
+
+        # Create a creator object based on the handle
+        creator = get_creator_by_handle(handle)
+
+        if not creator:
+            return jsonify({"status": "error", "message": f"Channel '{handle}' not found in database"}), 404
+
+        # Calculate metrics for the creator
+        metrics = calculate_creator_metrics(creator)
+        evaluated_creator = {**creator, **metrics}
+
+        return jsonify({
+            "status": "success",
+            "creator": evaluated_creator,
+            "message": f"Channel evaluated successfully! Score: {evaluated_creator['raw_score']}/100 (Tier {evaluated_creator['tier']})"
+        })
+    except Exception as e:
+        logging.error(f"Evaluate channel error: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+def parse_channel_link(link):
+    """Parse channel link or handle to extract the handle."""
+    # Remove spaces and convert to lowercase
+    link = link.strip().lower()
+
+    # If it's a URL, extract the handle
+    if 'youtube.com' in link or 'youtu.be' in link:
+        # Extract handle from youtube.com/@handle or youtube.com/c/handle
+        parts = link.split('/@')
+        if len(parts) > 1:
+            return parts[-1].split('?')[0].split('/')[0]
+        parts = link.split('/c/')
+        if len(parts) > 1:
+            return parts[-1].split('?')[0].split('/')[0]
+    elif 'instagram.com' in link:
+        # Extract handle from instagram.com/handle
+        parts = link.split('/instagram.com/')
+        if len(parts) > 1:
+            return parts[-1].split('?')[0].split('/')[0]
+        parts = link.split('/')
+        return parts[-1]
+    elif 'telegram.me' in link or 't.me' in link:
+        # Extract handle from t.me/handle
+        parts = link.split('/')
+        return parts[-1]
+
+    # If no protocol, assume it's a handle
+    if not link.startswith('http'):
+        # Remove @ if present
+        return link.lstrip('@')
+
+    return link
+
+def get_creator_by_handle(handle):
+    """Get creator data by handle. In production, query from Google Sheets."""
+    # Sample database
+    creators_db = {
+        "bitcoinboyz_in": {
+            "creator_id": "1", "handle": "BitcoinBoyz_IN", "display_name": "Bitcoin Boyz India",
+            "platform": "YouTube", "follower_count": 156000, "video_or_post_count": 521,
+            "contact_status": "found", "profile_url": "https://youtube.com/@BitcoinBoyz_IN"
+        },
+        "cryptotradingwithrahul": {
+            "creator_id": "2", "handle": "CryptoTradingWithRahul", "display_name": "Rahul Crypto Trading",
+            "platform": "YouTube", "follower_count": 125000, "video_or_post_count": 487,
+            "contact_status": "found", "profile_url": "https://youtube.com/@CryptoTradingWithRahul"
+        },
+        "tradingwithvinay": {
+            "creator_id": "3", "handle": "TradingWithVinay", "display_name": "Vinay - The Trader",
+            "platform": "YouTube", "follower_count": 87500, "video_or_post_count": 342,
+            "contact_status": "found", "profile_url": "https://youtube.com/@TradingWithVinay"
+        },
+        "deeptradingsignals": {
+            "creator_id": "4", "handle": "DeepTradingSignals", "display_name": "Deep Trading Signals",
+            "platform": "YouTube", "follower_count": 67800, "video_or_post_count": 289,
+            "contact_status": "dm_only", "profile_url": "https://youtube.com/@DeepTradingSignals"
+        },
+        "cryptoedu_india": {
+            "creator_id": "5", "handle": "CryptoEdu_India", "display_name": "Crypto Education Hub",
+            "platform": "YouTube", "follower_count": 45000, "video_or_post_count": 156,
+            "contact_status": "not_found", "profile_url": "https://youtube.com/@CryptoEdu_India"
+        }
+    }
+
+    # Look up the handle (case-insensitive)
+    key = handle.lower().replace('@', '')
+    return creators_db.get(key)
+
 def calculate_creator_metrics(creator):
     """Calculate all evaluation metrics for a creator with actual + scaled values."""
     fc = creator.get("follower_count", 0)
