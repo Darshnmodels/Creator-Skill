@@ -654,23 +654,6 @@
             event.target.style.borderBottomColor = '#667eea';
         }
 
-        // Evaluate tab switching
-        function switchEvalTab(tabName) {
-            document.querySelectorAll('.eval-tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabName + '-tab')?.classList.add('active');
-
-            // Update tab button styles
-            event.target.parentElement.querySelectorAll('.tab-button').forEach(btn => {
-                btn.classList.remove('active');
-                btn.style.color = '#999';
-                btn.style.borderBottomColor = 'transparent';
-            });
-
-            event.target.classList.add('active');
-            event.target.style.color = '#667eea';
-            event.target.style.borderBottomColor = '#667eea';
-        }
-
         // Export Hunt Results as JSON
         function exportHuntAsJSON() {
             if (huntResults.length === 0) {
