@@ -322,6 +322,22 @@
         .tab-content.active {
             display: block;
         }
+
+        .hunt-tab-content {
+            display: none;
+        }
+
+        .hunt-tab-content.active {
+            display: block;
+        }
+
+        .eval-tab-content {
+            display: none;
+        }
+
+        .eval-tab-content.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -339,84 +355,147 @@
         </header>
 
         <div class="content">
-            <!-- Hunt Phase -->
+            <!-- Hunt Phase with Three Tabs -->
             <div id="hunt" class="tab-content active">
                 <div class="card">
                     <h2>🔍 Hunt Phase</h2>
-                    <p style="margin-bottom: 20px; color: #666;">Discover creators across YouTube, Instagram, Telegram, Twitter</p>
+                    <p style="margin-bottom: 20px; color: #666;">Discover creators across platforms</p>
 
-                    <div class="form-group">
-                        <label>📝 Brief/Keywords (Generate Keywords)</label>
-                        <textarea id="hunt_prompt" placeholder="e.g., 'Indian crypto traders teaching Bitcoin strategy' or list keywords like 'crypto trading, bitcoin, ethereum'" style="min-height: 80px;"></textarea>
-                        <button class="btn-secondary" onclick="generateKeywords()" style="width: 100%; margin-top: 10px;">🔑 Generate Keywords from Brief</button>
+                    <!-- Hunt Sub-tabs -->
+                    <div class="tabs">
+                        <button class="tab-button active" onclick="switchHuntTab('hunt-form')" style="background: none; border: none; padding: 10px 15px; font-weight: 600; color: #999; border-bottom: 3px solid transparent; cursor: pointer;">📝 Hunt Form</button>
+                        <button class="tab-button" onclick="switchHuntTab('hunt-results')" style="background: none; border: none; padding: 10px 15px; font-weight: 600; color: #999; border-bottom: 3px solid transparent; cursor: pointer;">📊 Results</button>
+                        <button class="tab-button" onclick="switchHuntTab('hunt-export')" style="background: none; border: none; padding: 10px 15px; font-weight: 600; color: #999; border-bottom: 3px solid transparent; cursor: pointer;">📥 Export</button>
                     </div>
 
-                    <div id="keywords-output" style="display: none; margin-bottom: 20px; padding: 15px; background: #f0f7ff; border-radius: 8px; border-left: 4px solid #667eea;">
-                        <strong style="color: #667eea;">Generated Keywords:</strong>
-                        <div id="keywords-list" style="margin-top: 10px; font-size: 13px; color: #555;"></div>
-                    </div>
+                    <!-- Hunt Form Tab -->
+                    <div id="hunt-form" class="hunt-tab-content active">
+                        <div class="form-group">
+                            <label>📝 Brief/Keywords (Generate Keywords)</label>
+                            <textarea id="hunt_prompt" placeholder="e.g., 'Indian crypto traders teaching Bitcoin strategy' or list keywords like 'crypto trading, bitcoin, ethereum'" style="min-height: 80px;"></textarea>
+                            <button class="btn-secondary" onclick="generateKeywords()" style="width: 100%; margin-top: 10px;">🔑 Generate Keywords from Brief</button>
+                        </div>
 
-                    <div class="form-group">
-                        <label>Vertical</label>
-                        <select id="vertical">
-                            <option value="crypto">Crypto Trading</option>
-                            <option value="equities">Stock Market</option>
-                            <option value="forex">Forex</option>
-                            <option value="options">Options/F&O</option>
-                            <option value="fintech">Fintech Education</option>
-                        </select>
-                    </div>
+                        <div id="keywords-output" style="display: none; margin-bottom: 20px; padding: 15px; background: #f0f7ff; border-radius: 8px; border-left: 4px solid #667eea;">
+                            <strong style="color: #667eea;">Generated Keywords:</strong>
+                            <div id="keywords-list" style="margin-top: 10px; font-size: 13px; color: #555;"></div>
+                        </div>
 
-                    <div class="form-group">
-                        <label>Platforms</label>
-                        <select id="platforms">
-                            <option value="youtube">YouTube</option>
-                            <option value="instagram">Instagram</option>
-                            <option value="telegram">Telegram</option>
-                            <option value="twitter">Twitter/X</option>
-                        </select>
-                    </div>
+                        <div class="form-group">
+                            <label>Vertical</label>
+                            <select id="vertical">
+                                <option value="crypto">Crypto Trading</option>
+                                <option value="equities">Stock Market</option>
+                                <option value="forex">Forex</option>
+                                <option value="options">Options/F&O</option>
+                                <option value="fintech">Fintech Education</option>
+                            </select>
+                        </div>
 
-                    <div class="form-group">
-                        <label>Geography/Language</label>
-                        <input type="text" id="geography" placeholder="e.g., India (Hindi, English)" value="India (Hindi, English)">
-                    </div>
+                        <div class="form-group">
+                            <label>Platforms</label>
+                            <select id="platforms">
+                                <option value="youtube">YouTube</option>
+                                <option value="instagram">Instagram</option>
+                                <option value="telegram">Telegram</option>
+                                <option value="twitter">Twitter/X</option>
+                            </select>
+                        </div>
 
-                    <div class="form-group">
-                        <label>Min Followers</label>
-                        <input type="number" id="follower_min" value="10000">
-                    </div>
+                        <div class="form-group">
+                            <label>Geography/Language</label>
+                            <input type="text" id="geography" placeholder="e.g., India (Hindi, English)" value="India (Hindi, English)">
+                        </div>
 
-                    <div class="form-group">
-                        <label>Max Followers</label>
-                        <input type="number" id="follower_max" value="999999">
-                    </div>
+                        <div class="form-group">
+                            <label>Min Followers</label>
+                            <input type="number" id="follower_min" value="10000">
+                        </div>
 
-                    <div class="form-group">
-                        <label>Number of Creators to Find</label>
-                        <select id="num_creators">
-                            <option value="50">50 creators</option>
-                            <option value="100">100 creators</option>
-                            <option value="500">500 creators</option>
-                            <option value="1000" selected>1,000 creators</option>
-                            <option value="2500">2,500 creators</option>
-                            <option value="5000">5,000 creators (Large scan)</option>
-                            <option value="10000">10,000 creators (Very Large)</option>
-                        </select>
-                        <small style="color: #999; display: block; margin-top: 5px;">⚠️ Larger scans take longer but discover more creators</small>
-                    </div>
+                        <div class="form-group">
+                            <label>Max Followers</label>
+                            <input type="number" id="follower_max" value="999999">
+                        </div>
 
-                    <div id="hunt-progress" style="display: none; margin-bottom: 20px;">
-                        <div style="background: #f0f0f0; border-radius: 8px; padding: 15px;">
-                            <strong>Hunt in progress...</strong>
-                            <div style="margin-top: 10px; background: white; border-radius: 4px; height: 8px; overflow: hidden;">
-                                <div id="hunt-progress-bar" style="height: 100%; background: #667eea; width: 0%; transition: width 0.3s;"></div>
+                        <div class="form-group">
+                            <label>Number of Creators to Find</label>
+                            <select id="num_creators">
+                                <option value="50">50 creators</option>
+                                <option value="100">100 creators</option>
+                                <option value="500">500 creators</option>
+                                <option value="1000" selected>1,000 creators</option>
+                                <option value="2500">2,500 creators</option>
+                                <option value="5000">5,000 creators (Large scan)</option>
+                                <option value="10000">10,000 creators (Very Large)</option>
+                            </select>
+                            <small style="color: #999; display: block; margin-top: 5px;">⚠️ Larger scans take longer but discover more creators</small>
+                        </div>
+
+                        <div id="hunt-progress" style="display: none; margin-bottom: 20px;">
+                            <div style="background: #f0f0f0; border-radius: 8px; padding: 15px;">
+                                <strong>Hunt in progress...</strong>
+                                <div style="margin-top: 10px; background: white; border-radius: 4px; height: 8px; overflow: hidden;">
+                                    <div id="hunt-progress-bar" style="height: 100%; background: #667eea; width: 0%; transition: width 0.3s;"></div>
+                                </div>
+                                <small id="hunt-status" style="display: block; margin-top: 8px; color: #666;">Initializing scan...</small>
                             </div>
-                            <small id="hunt-status" style="display: block; margin-top: 8px; color: #666;">Initializing scan...</small>
+                        </div>
+
+                        <button class="btn-success" onclick="runHunt()" style="width: 100%;">🚀 Start Hunt</button>
+                    </div>
+
+                    <!-- Hunt Results Tab -->
+                    <div id="hunt-results" class="hunt-tab-content" style="display: none;">
+                        <div id="hunt-results-empty" style="text-align: center; padding: 40px; color: #999;">
+                            <p>📊 Run a hunt to see results here</p>
+                        </div>
+                        <div id="hunt-results-content" style="display: none;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                                <div style="background: #f0f7ff; padding: 15px; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 24px; font-weight: bold; color: #667eea;" id="hunt-total-found">0</div>
+                                    <small style="color: #999;">Creators Found</small>
+                                </div>
+                                <div style="background: #f0fdf4; padding: 15px; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 24px; font-weight: bold; color: #10b981;" id="hunt-tier-a">0</div>
+                                    <small style="color: #999;">Tier A</small>
+                                </div>
+                                <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 24px; font-weight: bold; color: #3b82f6;" id="hunt-tier-b">0</div>
+                                    <small style="color: #999;">Tier B</small>
+                                </div>
+                                <div style="background: #fffbeb; padding: 15px; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 24px; font-weight: bold; color: #f59e0b;" id="hunt-tier-c">0</div>
+                                    <small style="color: #999;">Tier C</small>
+                                </div>
+                            </div>
+                            <div style="overflow-x: auto;">
+                                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                                    <thead>
+                                        <tr style="background: #667eea; color: white;">
+                                            <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Creator</th>
+                                            <th style="padding: 8px; text-align: center; border: 1px solid #ddd;">Followers</th>
+                                            <th style="padding: 8px; text-align: center; border: 1px solid #ddd;">Engagement</th>
+                                            <th style="padding: 8px; text-align: center; border: 1px solid #ddd;">Content Match</th>
+                                            <th style="padding: 8px; text-align: center; border: 1px solid #ddd;">Relevance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="hunt-results-table"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
 
-                    <button class="btn-success" onclick="runHunt()" style="width: 100%;">🚀 Start Hunt</button>
+                    <!-- Hunt Export Tab -->
+                    <div id="hunt-export" class="hunt-tab-content" style="display: none;">
+                        <div style="padding: 20px; text-align: center;">
+                            <p style="margin-bottom: 20px; color: #666;">📥 Export hunt results in your preferred format</p>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                                <button class="btn-secondary" onclick="exportHuntAsJSON()" style="padding: 20px;">📄 Export as JSON</button>
+                                <button class="btn-secondary" onclick="exportHuntAsCSV()" style="padding: 20px;">📊 Export as CSV</button>
+                                <button class="btn-success" onclick="exportToEvaluate()" style="padding: 20px;">➡️ Move to Evaluate</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -543,6 +622,9 @@
         let creatorsList = [];
         let generatedKeywords = [];
 
+        // Store hunt results for export
+        let huntResults = [];
+
         // Tab switching
         function openTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -553,6 +635,107 @@
             } else if (tabName === 'content') {
                 loadCreatorsForContent();
             }
+        }
+
+        // Hunt tab switching
+        function switchHuntTab(tabName) {
+            document.querySelectorAll('.hunt-tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName)?.classList.add('active');
+
+            // Update tab button styles
+            document.querySelectorAll('.tabs .tab-button').forEach(btn => {
+                btn.classList.remove('active');
+                btn.style.color = '#999';
+                btn.style.borderBottomColor = 'transparent';
+            });
+
+            event.target.classList.add('active');
+            event.target.style.color = '#667eea';
+            event.target.style.borderBottomColor = '#667eea';
+        }
+
+        // Evaluate tab switching
+        function switchEvalTab(tabName) {
+            document.querySelectorAll('.eval-tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName + '-tab')?.classList.add('active');
+
+            // Update tab button styles
+            event.target.parentElement.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+                btn.style.color = '#999';
+                btn.style.borderBottomColor = 'transparent';
+            });
+
+            event.target.classList.add('active');
+            event.target.style.color = '#667eea';
+            event.target.style.borderBottomColor = '#667eea';
+        }
+
+        // Export Hunt Results as JSON
+        function exportHuntAsJSON() {
+            if (huntResults.length === 0) {
+                showMessage('❌ No hunt results to export. Run a hunt first!', 'error');
+                return;
+            }
+
+            const dataStr = JSON.stringify(huntResults, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `hunt-results-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            showMessage('✅ Hunt results exported as JSON', 'success');
+        }
+
+        // Export Hunt Results as CSV
+        function exportHuntAsCSV() {
+            if (huntResults.length === 0) {
+                showMessage('❌ No hunt results to export. Run a hunt first!', 'error');
+                return;
+            }
+
+            const headers = ['Creator', 'Handle', 'Platform', 'Followers', 'Engagement Rate', 'Content Match', 'Tier', 'Relevance Score'];
+            const rows = huntResults.map(creator => [
+                creator.display_name || creator.name,
+                creator.handle,
+                creator.platform,
+                creator.followers,
+                (creator.engagement_rate || 0).toFixed(2) + '%',
+                (creator.content_match || 0) + '%',
+                creator.tier || 'Pending',
+                (creator.relevance_score || 0).toFixed(2)
+            ]);
+
+            let csv = headers.join(',') + '\n';
+            rows.forEach(row => {
+                csv += row.map(cell => `"${cell}"`).join(',') + '\n';
+            });
+
+            const dataBlob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `hunt-results-${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+            showMessage('✅ Hunt results exported as CSV', 'success');
+        }
+
+        // Export Hunt Results to Evaluate Phase
+        function exportToEvaluate() {
+            if (huntResults.length === 0) {
+                showMessage('❌ No hunt results to export. Run a hunt first!', 'error');
+                return;
+            }
+
+            // Add hunt results to creators list
+            const newCreators = huntResults.filter(c => !creatorsList.find(existing => existing.handle === c.handle));
+            creatorsList = [...creatorsList, ...newCreators];
+
+            showMessage(`✅ Added ${newCreators.length} creators from hunt to Evaluate phase!`, 'success');
+
+            // Switch to Evaluate tab
+            openTab('evaluate');
         }
 
         // Generate Keywords from Brief (100+ keywords)
@@ -749,9 +932,17 @@
                     statusText.textContent = `✅ Found ${data.found_creators || num_creators} creators! Deduplicating...`;
                     showMessage(`✅ Hunt complete: ${data.message}`, 'success');
 
+                    // Store hunt results
+                    huntResults = data.creators || [];
+
+                    // Display results in Results tab
+                    displayHuntResults(huntResults);
+
                     // Hide progress after 2 seconds
                     setTimeout(() => {
                         progressDiv.style.display = 'none';
+                        // Switch to Results tab
+                        switchHuntTab('hunt-results');
                     }, 2000);
 
                     loadCreators();
@@ -765,6 +956,59 @@
                 progressDiv.style.display = 'none';
                 showMessage(`❌ Error: ${e.message}`, 'error');
             }
+        }
+
+        // Display Hunt Results
+        function displayHuntResults(results) {
+            const empty = document.getElementById('hunt-results-empty');
+            const content = document.getElementById('hunt-results-content');
+            const table = document.getElementById('hunt-results-table');
+
+            if (!results || results.length === 0) {
+                empty.style.display = 'block';
+                content.style.display = 'none';
+                return;
+            }
+
+            empty.style.display = 'none';
+            content.style.display = 'block';
+
+            // Count tiers
+            const tierA = results.filter(c => c.tier === 'A').length;
+            const tierB = results.filter(c => c.tier === 'B').length;
+            const tierC = results.filter(c => c.tier === 'C').length;
+
+            document.getElementById('hunt-total-found').textContent = results.length;
+            document.getElementById('hunt-tier-a').textContent = tierA;
+            document.getElementById('hunt-tier-b').textContent = tierB;
+            document.getElementById('hunt-tier-c').textContent = tierC;
+
+            // Populate table
+            table.innerHTML = results.map(c => {
+                const tierColor = c.tier === 'A' ? '#10b981' : c.tier === 'B' ? '#3b82f6' : c.tier === 'C' ? '#f59e0b' : '#999';
+                const bgColor = c.tier === 'A' ? '#f0fdf4' : c.tier === 'B' ? '#f0f9ff' : c.tier === 'C' ? '#fffbeb' : 'white';
+
+                return `
+                    <tr style="border: 1px solid #eee; background: ${bgColor};">
+                        <td style="padding: 8px; border: 1px solid #eee; min-width: 140px;">
+                            <strong>${c.display_name || c.name}</strong>
+                            <br><small style="color: #999;">@${c.handle}</small>
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #eee; text-align: center;">
+                            <div style="color: #667eea; font-weight: bold;">${(c.followers / 1000).toFixed(0)}k</div>
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #eee; text-align: center;">
+                            <div style="color: #667eea; font-weight: bold;">${(c.engagement_rate || 0).toFixed(1)}%</div>
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #eee; text-align: center;">
+                            <div style="color: #667eea; font-weight: bold;">${(c.content_match || 0)}%</div>
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #eee; text-align: center; font-weight: bold; color: ${tierColor};">
+                            ${c.tier || 'Pending'} ${c.tier === 'A' ? '⭐' : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         // Evaluate Phase with detailed metrics
