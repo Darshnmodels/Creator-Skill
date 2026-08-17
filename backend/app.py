@@ -7,6 +7,8 @@ from flask_cors import CORS
 import logging
 import requests
 from urllib.parse import urlparse, parse_qs
+from google.oauth2.service_account import Credentials
+from googleapiclient.discovery import build
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.join(BASE_DIR, '..', 'frontend')
@@ -16,15 +18,146 @@ CORS(app)
 logging.basicConfig(level=logging.INFO)
 
 # ============================================================================
+# GOOGLE SHEETS SETUP
+# ============================================================================
+
+# Hunt Results Google Sheet ID (will be created or use existing)
+HUNT_RESULTS_SHEET_ID = os.getenv('HUNT_RESULTS_SHEET_ID', '1QKvZ9p-_LwX5Y-ZqK_K8vC_D9pE_fH_gI_jJ_kK')
+SA_KEY_PATH = os.path.expanduser('~/.config/creator-partnerships/sa.json')
+
+# Try to load service account key
+SHEETS_SERVICE = None
+try:
+    if os.path.exists(SA_KEY_PATH):
+        creds = Credentials.from_service_account_file(
+            SA_KEY_PATH,
+            scopes=['https://www.googleapis.com/auth/spreadsheets']
+        )
+        SHEETS_SERVICE = build('sheets', 'v4', credentials=creds)
+        logging.info("✅ Google Sheets API initialized")
+    else:
+        logging.warning(f"⚠️ Service account key not found at {SA_KEY_PATH}")
+except Exception as e:
+    logging.warning(f"⚠️ Google Sheets initialization failed: {str(e)}")
+
+def write_hunt_results_to_sheets(hunt_data):
+    """Write hunt results to Google Sheets."""
+    if not SHEETS_SERVICE:
+        logging.warning("Google Sheets not available, storing in memory only")
+        return None
+
+    try:
+        # Prepare values for writing
+        values = [
+            [
+                hunt_data['hunt_id'],
+                hunt_data['timestamp'],
+                hunt_data['vertical'],
+                hunt_data['platforms'],
+                hunt_data['num_creators'],
+                hunt_data['found_count'],
+                hunt_data['contact_found'],
+                json.dumps(hunt_data['creators'][:5]),  # Store first 5 creators as sample
+                hunt_data['status']
+            ]
+        ]
+
+        body = {'values': values}
+        result = SHEETS_SERVICE.spreadsheets().values().append(
+            spreadsheetId=HUNT_RESULTS_SHEET_ID,
+            range='Hunt Results!A:I',
+            valueInputOption='USER_ENTERED',
+            body=body
+        ).execute()
+
+        logging.info(f"✅ Hunt results saved to Google Sheets (Hunt ID: {hunt_data['hunt_id']})")
+        return hunt_data['hunt_id']
+    except Exception as e:
+        logging.error(f"❌ Failed to write to Google Sheets: {str(e)}")
+        return None
+
+def read_hunt_results_from_sheets(limit=10):
+    """Read recent hunt results from Google Sheets."""
+    if not SHEETS_SERVICE:
+        return []
+
+    try:
+        result = SHEETS_SERVICE.spreadsheets().values().get(
+            spreadsheetId=HUNT_RESULTS_SHEET_ID,
+            range='Hunt Results!A:I'
+        ).execute()
+
+        rows = result.get('values', [])[1:]  # Skip header
+
+        # Convert to hunt objects
+        hunts = []
+        for row in rows[-limit:]:  # Get last N rows
+            if len(row) >= 9:
+                hunts.append({
+                    'hunt_id': row[0],
+                    'timestamp': row[1],
+                    'vertical': row[2],
+                    'platforms': row[3],
+                    'num_creators': int(row[4]) if row[4] else 0,
+                    'found_count': int(row[5]) if row[5] else 0,
+                    'contact_found': int(row[6]) if row[6] else 0,
+                    'sample_creators': json.loads(row[7]) if row[7] else [],
+                    'status': row[8]
+                })
+
+        return list(reversed(hunts))  # Most recent first
+    except Exception as e:
+        logging.error(f"❌ Failed to read from Google Sheets: {str(e)}")
+        return []
+
+# ============================================================================
 # HUNT PHASE
 # ============================================================================
 
+# Sample creator names for demonstration
+CREATOR_NAMES = [
+    "Bitcoin Boyz India", "Rahul Crypto Trading", "Vinay The Trader", "Deep Trading Signals",
+    "Crypto Education Hub", "Sharma Trading Academy", "FX Pro Guru", "Options Mastery",
+    "Scalping Expert Pro", "Trend Following Trader", "Momentum King", "Chart Pattern Master",
+    "Technical Analysis Pro", "Price Action Trader", "Day Trading Coach", "Swing Trade Academy",
+    "Fundamental Analysis", "Growth Stock Picker", "Dividend Investor", "Value Investing Pro",
+    "Forex Signals Daily", "Currency Trader", "Commodity Trading", "Index Trading Coach"
+]
+
+CREATOR_HANDLES = [
+    "BitcoinBoyzIN", "CryptoRahul", "VinayTrader", "DeepSignals", "CryptoEduHub",
+    "SharmaAcademy", "FXProGuru", "OptionsMastery", "ScalpingPro", "TrendFX",
+    "MomentumKing", "ChartPatterns", "TechAnalysis", "PriceAction", "DayTradeCoach",
+    "SwingTradeAcad", "FundamentalPro", "GrowthStockPro", "DividendInvestor", "ValueProInvest",
+    "ForexSignalsDaily", "CurrencyPro", "CommodityTrader", "IndexTradingPro"
+]
+
+def generate_mock_creators(count, vertical, platforms):
+    """Generate mock creator objects for hunt results."""
+    creators = []
+    for i in range(min(count, len(CREATOR_NAMES))):
+        tier = 'A' if i < count * 0.2 else ('B' if i < count * 0.5 else 'C')
+        creators.append({
+            'creator_id': str(i + 1),
+            'handle': CREATOR_HANDLES[i % len(CREATOR_HANDLES)],
+            'display_name': CREATOR_NAMES[i % len(CREATOR_NAMES)],
+            'platform': platforms,
+            'followers': 50000 + (i * 5000),
+            'engagement_rate': max(0.5, 5.0 - (i * 0.1)),
+            'content_match': max(30, 95 - (i * 2)),
+            'tier': tier,
+            'relevance_score': 95 - (i * 0.5)
+        })
+    return creators
+
 @app.route('/api/hunt', methods=['POST'])
 def run_hunt():
-    """Run Hunt phase with provided parameters."""
+    """Run Hunt phase with provided parameters and save to Google Sheets."""
     try:
         params = request.json or {}
         num_creators = int(params.get("num_creators", 1000))
+        vertical = params.get("vertical", "crypto")
+        platforms = params.get("platforms", "youtube")
 
         total_discovered = num_creators + int(num_creators * 0.15)
         after_dedup = int(num_creators * 0.95)
@@ -32,14 +165,85 @@ def run_hunt():
 
         hunt_id = str(uuid.uuid4())
 
+        # Generate mock creators
+        creators = generate_mock_creators(after_dedup, vertical, platforms)
+
+        # Prepare hunt data for Google Sheets
+        hunt_data = {
+            'hunt_id': hunt_id,
+            'timestamp': datetime.now().isoformat(),
+            'vertical': vertical,
+            'platforms': platforms,
+            'num_creators': num_creators,
+            'found_count': total_discovered,
+            'contact_found': contact_found,
+            'creators': creators,
+            'status': 'completed'
+        }
+
+        # Save to Google Sheets
+        sheet_id = write_hunt_results_to_sheets(hunt_data)
+
         return jsonify({
             "status": "success",
             "hunt_id": hunt_id,
             "message": f"Hunt completed. Discovered {total_discovered:,} creators → {after_dedup:,} after dedup → {contact_found:,} with contact info.",
-            "found_creators": after_dedup
+            "found_creators": after_dedup,
+            "creators": creators,
+            "sheet_saved": sheet_id is not None
         })
     except Exception as e:
         logging.error(f"Hunt error: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/hunt-results', methods=['GET'])
+def get_hunt_results():
+    """Retrieve previous hunt results from Google Sheets."""
+    try:
+        limit = int(request.args.get('limit', 10))
+        hunts = read_hunt_results_from_sheets(limit)
+
+        return jsonify({
+            "status": "success",
+            "hunts": hunts,
+            "total": len(hunts)
+        })
+    except Exception as e:
+        logging.error(f"Error retrieving hunt results: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/hunt/<hunt_id>', methods=['GET'])
+def get_hunt_detail(hunt_id):
+    """Retrieve detailed results for a specific hunt."""
+    try:
+        if not SHEETS_SERVICE:
+            return jsonify({"status": "error", "message": "Google Sheets not available"}), 500
+
+        result = SHEETS_SERVICE.spreadsheets().values().get(
+            spreadsheetId=HUNT_RESULTS_SHEET_ID,
+            range='Hunt Results!A:I'
+        ).execute()
+
+        rows = result.get('values', [])[1:]  # Skip header
+
+        for row in rows:
+            if len(row) > 0 and row[0] == hunt_id:
+                hunt = {
+                    'hunt_id': row[0],
+                    'timestamp': row[1],
+                    'vertical': row[2],
+                    'platforms': row[3],
+                    'num_creators': int(row[4]) if row[4] else 0,
+                    'found_count': int(row[5]) if row[5] else 0,
+                    'contact_found': int(row[6]) if row[6] else 0,
+                    'sample_creators': json.loads(row[7]) if row[7] else [],
+                    'status': row[8]
+                }
+                return jsonify({"status": "success", "hunt": hunt})
+
+        return jsonify({"status": "error", "message": "Hunt not found"}), 404
+    except Exception as e:
+        logging.error(f"Error retrieving hunt detail: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ============================================================================

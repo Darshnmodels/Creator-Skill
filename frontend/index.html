@@ -446,6 +446,15 @@
 
                     <!-- Hunt Results Tab -->
                     <div id="hunt-results" class="hunt-tab-content" style="display: none;">
+                        <div style="margin-bottom: 20px;">
+                            <button class="btn-secondary" onclick="loadPreviousHunts()" style="width: 100%;">📜 Load Previous Hunt Results</button>
+                        </div>
+
+                        <div id="hunt-history" style="display: none; margin-bottom: 20px; padding: 15px; background: #f3f4f6; border-radius: 8px;">
+                            <strong style="color: #333;">📋 Hunt History</strong>
+                            <div id="hunt-history-list" style="margin-top: 10px; max-height: 200px; overflow-y: auto;"></div>
+                        </div>
+
                         <div id="hunt-results-empty" style="text-align: center; padding: 40px; color: #999;">
                             <p>📊 Run a hunt to see results here</p>
                         </div>
@@ -992,6 +1001,68 @@
                     </tr>
                 `;
             }).join('');
+        }
+
+        // Load previous hunt results from Google Sheets
+        async function loadPreviousHunts() {
+            try {
+                const response = await fetch(`${API_BASE}/hunt-results?limit=10`);
+                const data = await response.json();
+
+                if (data.status === 'success' && data.hunts && data.hunts.length > 0) {
+                    const historyDiv = document.getElementById('hunt-history');
+                    const historyList = document.getElementById('hunt-history-list');
+
+                    historyList.innerHTML = data.hunts.map(hunt => `
+                        <div style="padding: 10px; background: white; border-radius: 6px; margin-bottom: 8px; cursor: pointer; border-left: 3px solid #667eea;" onclick="loadHuntDetail('${hunt.hunt_id}')">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong>${hunt.vertical} • ${hunt.platforms}</strong>
+                                    <br><small style="color: #999;">${hunt.timestamp.split('T')[0]} • ${hunt.found_count.toLocaleString()} creators</small>
+                                </div>
+                                <div style="text-align: right;">
+                                    <small style="background: #667eea; color: white; padding: 4px 8px; border-radius: 4px;">${hunt.status}</small>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    historyDiv.style.display = 'block';
+                    showMessage(`✅ Loaded ${data.total} previous hunts from Google Sheets`, 'success');
+                } else {
+                    showMessage('ℹ️ No previous hunt results found', 'success');
+                }
+            } catch (e) {
+                showMessage(`❌ Error loading hunt history: ${e.message}`, 'error');
+            }
+        }
+
+        // Load details for a specific hunt
+        async function loadHuntDetail(huntId) {
+            try {
+                const response = await fetch(`${API_BASE}/hunt/${huntId}`);
+                const data = await response.json();
+
+                if (data.status === 'success' && data.hunt) {
+                    const hunt = data.hunt;
+
+                    // Create mock creators from sample
+                    const creators = hunt.sample_creators && hunt.sample_creators.length > 0
+                        ? hunt.sample_creators
+                        : [];
+
+                    if (creators.length > 0) {
+                        displayHuntResults(creators);
+                        showMessage(`✅ Loaded hunt from ${hunt.timestamp.split('T')[0]}`, 'success');
+                    } else {
+                        showMessage('⚠️ No creator details available for this hunt', 'success');
+                    }
+                } else {
+                    showMessage(`❌ Hunt not found: ${data.message}`, 'error');
+                }
+            } catch (e) {
+                showMessage(`❌ Error loading hunt details: ${e.message}`, 'error');
+            }
         }
 
         // Evaluate Phase with detailed metrics
