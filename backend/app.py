@@ -21,8 +21,8 @@ logging.basicConfig(level=logging.INFO)
 # GOOGLE SHEETS SETUP
 # ============================================================================
 
-# Hunt Results Google Sheet ID (will be created or use existing)
-HUNT_RESULTS_SHEET_ID = os.getenv('HUNT_RESULTS_SHEET_ID', '1QKvZ9p-_LwX5Y-ZqK_K8vC_D9pE_fH_gI_jJ_kK')
+# Hunt Results Google Sheet ID
+HUNT_RESULTS_SHEET_ID = os.getenv('HUNT_RESULTS_SHEET_ID', '1Pe7g1XQ1R9GHjlfKGFITqwDFCYJ4SmX9MoeTv_jCu6U')
 SA_KEY_PATH = os.path.expanduser('~/.config/creator-partnerships/sa.json')
 
 # Try to load service account key
