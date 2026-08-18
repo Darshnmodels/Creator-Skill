@@ -730,7 +730,7 @@
             openTab('evaluate');
         }
 
-        // Generate Keywords from Brief (100+ keywords) - Improved
+        // Generate Keywords from Brief - Semantic Analysis Approach
         function generateKeywords() {
             const prompt = document.getElementById('hunt_prompt').value.trim();
 
@@ -739,8 +739,162 @@
                 return;
             }
 
-            // Comprehensive keyword database for each vertical
-            const keywordDatabase = {
+            // Semantic keyword generation - analyzing intent and concepts
+            const promptLower = prompt.toLowerCase();
+            let keywords = new Set();
+
+            // 1. EXTRACT PRIMARY CONCEPTS
+            // Domain/Vertical identification
+            const domainMap = {
+                'crypto|bitcoin|ethereum|blockchain|defi|nft|altcoin|coin|token|web3': ['crypto', 'bitcoin', 'ethereum', 'blockchain', 'cryptocurrency', 'altcoin', 'defi', 'nft', 'web3', 'crypto trading', 'bitcoin trading', 'ethereum trading', 'crypto analysis', 'crypto signals', 'crypto education'],
+                'stock|equity|share|nifty|sensex|bse|nse': ['stock', 'stock market', 'stocks', 'equity', 'share market', 'nifty', 'sensex', 'stock trading', 'stock analysis', 'stock education'],
+                'forex|currency|fx|eurusd|gbpusd': ['forex', 'currency', 'forex trading', 'currency trading', 'forex analysis', 'fx'],
+                'option|f&o|derivative|call|put|strike': ['options', 'options trading', 'f&o', 'derivatives', 'call option', 'put option', 'nifty options'],
+                'fintech|wealth|investment|fund|mutual|insurance': ['fintech', 'investment', 'wealth management', 'mutual fund', 'insurance', 'financial planning']
+            };
+
+            // Language/Region identification
+            const languageMap = {
+                'malayalam|മലയാളം': { lang: 'Malayalam', region: 'Kerala', script: 'മലയാളം', country: 'India' },
+                'tamil|தமிழ்': { lang: 'Tamil', region: 'Tamil Nadu', script: 'தமிழ்', country: 'India' },
+                'telugu|తెలుగు': { lang: 'Telugu', region: 'Telangana/Andhra', script: 'తెలుగు', country: 'India' },
+                'kannada|ಕನ್ನಡ': { lang: 'Kannada', region: 'Karnataka', script: 'ಕನ್ನಡ', country: 'India' },
+                'hindi|हिंदी': { lang: 'Hindi', region: 'North India', script: 'हिंदी', country: 'India' },
+                'gujarati|ગુજરાતી': { lang: 'Gujarati', region: 'Gujarat', script: 'ગુજરાતી', country: 'India' },
+                'marathi|मराठी': { lang: 'Marathi', region: 'Maharashtra', script: 'मराठी', country: 'India' },
+                'bengali|বাংলা': { lang: 'Bengali', region: 'West Bengal', script: 'বাংলা', country: 'India' },
+                'punjabi|ਪੰਜਾਬੀ': { lang: 'Punjabi', region: 'Punjab', script: 'ਪੰਜਾਬੀ', country: 'India' },
+                'english': { lang: 'English', region: 'Global', script: 'English', country: 'Global' }
+            };
+
+            // Activity/Type identification
+            const activityKeywords = {
+                'teach|education|learn|course|tutorial|training|trainer': ['education', 'tutorial', 'course', 'learning', 'training', 'educator', 'trainer', 'teaching', 'educational content'],
+                'trade|trading|trader|buy|sell|invest|investing': ['trading', 'trader', 'trading strategy', 'day trading', 'swing trading', 'investing', 'investment'],
+                'analysis|analyze|chart|technical|fundamental|price action': ['analysis', 'technical analysis', 'fundamental analysis', 'chart analysis', 'price action'],
+                'signal|tip|recommendation|advice|strategy': ['signals', 'tips', 'recommendations', 'strategy', 'strategies', 'advice'],
+                'live|stream|video|content|channel|creator|influencer': ['live', 'livestream', 'video', 'content', 'creator', 'influencer', 'channel']
+            };
+
+            // Platform identification
+            const platformKeywords = {
+                'youtube|yt|video': ['YouTube', 'youtube channel', 'video', 'shorts', 'livestream'],
+                'instagram|insta|reels': ['Instagram', 'instagram reels', 'insta', 'reels', 'stories'],
+                'telegram|tg': ['Telegram', 'telegram channel', 'telegram group'],
+                'twitter|x|tweet': ['Twitter', 'X', 'tweets'],
+                'tiktok|tik tok': ['TikTok', 'short videos']
+            };
+
+            // 2. EXTRACT CONCEPTS FROM PROMPT
+            let detectedDomain = null;
+            let detectedLanguage = null;
+            let detectedActivities = [];
+            let detectedPlatforms = [];
+
+            // Detect domain
+            for (let [pattern, terms] of Object.entries(domainMap)) {
+                if (new RegExp(pattern, 'i').test(promptLower)) {
+                    detectedDomain = terms;
+                    break;
+                }
+            }
+
+            // Detect language
+            for (let [pattern, langInfo] of Object.entries(languageMap)) {
+                if (new RegExp(pattern, 'i').test(promptLower)) {
+                    detectedLanguage = langInfo;
+                    break;
+                }
+            }
+
+            // Detect activities
+            for (let [pattern, terms] of Object.entries(activityKeywords)) {
+                if (new RegExp(pattern, 'i').test(promptLower)) {
+                    detectedActivities.push(...terms);
+                }
+            }
+
+            // Detect platforms
+            for (let [pattern, terms] of Object.entries(platformKeywords)) {
+                if (new RegExp(pattern, 'i').test(promptLower)) {
+                    detectedPlatforms.push(...terms);
+                }
+            }
+
+            // 3. BUILD KEYWORD SET
+            // Add domain keywords
+            if (detectedDomain) {
+                detectedDomain.forEach(kw => keywords.add(kw));
+            }
+
+            // Add activity keywords
+            detectedActivities.forEach(kw => keywords.add(kw));
+
+            // Add platform keywords
+            detectedPlatforms.forEach(kw => keywords.add(kw));
+
+            // Add language/region keywords
+            if (detectedLanguage) {
+                keywords.add(detectedLanguage.lang);
+                keywords.add(detectedLanguage.region);
+                keywords.add(detectedLanguage.script);
+                if (detectedLanguage.country === 'India') {
+                    keywords.add('India');
+                    keywords.add('Indian');
+                    keywords.add('creator');
+                    keywords.add('influencer');
+                }
+            }
+
+            // 4. ADD RELATED SEMANTIC KEYWORDS
+            const relatedKeywords = {
+                'trading': ['technical analysis', 'price action', 'market analysis', 'trading signals', 'risk management', 'money management', 'position sizing', 'stop loss', 'take profit', 'scalping', 'swing trading', 'day trading'],
+                'education': ['beginner', 'advanced', 'course', 'learning', 'tutorial', 'step by step', 'how to', 'guide', 'explanation'],
+                'crypto': ['market trends', 'volatility', 'liquidity', 'altcoins', 'pump and dump', 'whale watching', 'leverage', 'margin'],
+                'stock': ['fundamental analysis', 'value investing', 'growth stocks', 'dividend stocks', 'portfolio', 'diversification'],
+                'India': ['hindi', 'regional', 'vernacular', 'local', 'hindi content', 'regional language']
+            };
+
+            for (let [key, values] of Object.entries(relatedKeywords)) {
+                if (keywords.has(key)) {
+                    values.forEach(kw => keywords.add(kw));
+                }
+            }
+
+            // 5. ADD UNIVERSAL KEYWORDS
+            ['creator', 'influencer', 'educator', 'expert', 'trainer', 'teacher', 'coach', 'mentor',
+             'youtube', 'instagram', 'telegram', 'twitter', 'social media',
+             'content', 'strategy', 'analysis', 'tips', 'guide'].forEach(kw => keywords.add(kw));
+
+            // 6. PARSE CUSTOM WORDS FROM BRIEF
+            const customWords = promptLower
+                .replace(/[,\-]/g, ' ')
+                .split(/\s+/)
+                .filter(w => w.length > 2 && !['the', 'for', 'and', 'are', 'how', 'who', 'what', 'why', 'with', 'from', 'can', 'this', 'that', 'teach', 'learn', 'trade'].includes(w));
+
+            customWords.forEach(w => {
+                if (w.length > 3 || !isNaN(w)) keywords.add(w);
+            });
+
+            // 7. FINAL CLEANUP AND SORT
+            generatedKeywords = Array.from(keywords)
+                .filter(k => k && k.length > 0)
+                .slice(0, 200);
+
+            // Display generated keywords
+            const output = document.getElementById('keywords-output');
+            const list = document.getElementById('keywords-list');
+
+            list.innerHTML = generatedKeywords
+                .map(kw => `<span style="display: inline-block; background: #667eea; color: white; padding: 5px 10px; margin: 3px; border-radius: 4px; font-size: 12px;">${kw}</span>`)
+                .join('');
+
+            output.style.display = 'block';
+            showMessage(`✅ Generated ${generatedKeywords.length} keywords!`, 'success');
+        }
+
+        // OLD DATABASE (kept as reference)
+        const keywordDatabase = {
                 'crypto': [
                     'crypto trading', 'bitcoin', 'ethereum', 'altcoin', 'cryptocurrency', 'blockchain', 'crypto trader', 'crypto educator',
                     'bitcoin trading', 'ethereum trading', 'altcoin trading', 'crypto signals', 'trading signals', 'btc', 'eth',
