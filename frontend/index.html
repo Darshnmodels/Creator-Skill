@@ -876,9 +876,42 @@
             // 4. Always add universal keywords
             keywords = [...new Set([...keywords, ...universalKeywords])];
 
-            // 5. Add language variants for India
-            if (promptLower.includes('india') || promptLower.includes('hindi') || promptLower.includes('भारत')) {
-                keywords.push('india', 'hindi', 'indian', 'भारतीय', 'शेयर बाजार', 'क्रिप्टो', 'फोरेक्स', 'ट्रेडिंग', 'शिक्षा');
+            // 5. Add language variants for India (including regional languages)
+            const indianLanguages = ['india', 'hindi', 'भारत', 'malayalam', 'tamil', 'telugu', 'kannada', 'marathi', 'bengali', 'gujarati', 'punjabi'];
+            const isIndian = indianLanguages.some(lang => promptLower.includes(lang));
+
+            if (isIndian) {
+                // Core Indian keywords
+                keywords.push('india', 'indian', 'भारतीय', 'creator', 'influencer', 'educator');
+
+                // Language-specific keywords
+                if (promptLower.includes('hindi') || promptLower.includes('हिंदी')) {
+                    keywords.push('हिंदी', 'शेयर बाजार', 'क्रिप्टो', 'फोरेक्स', 'ट्रेडिंग', 'शिक्षा', 'व्यापार');
+                }
+                if (promptLower.includes('malayalam') || promptLower.includes('മലയാളം')) {
+                    keywords.push('malayalam', 'മലയാളം', 'kerala', 'കേരളം', 'south indian', 'regional');
+                }
+                if (promptLower.includes('tamil') || promptLower.includes('தமிழ்')) {
+                    keywords.push('tamil', 'தமிழ்', 'tamil nadu', 'south indian', 'regional');
+                }
+                if (promptLower.includes('telugu') || promptLower.includes('తెలుగు')) {
+                    keywords.push('telugu', 'తెలుగు', 'andhra', 'telangana', 'south indian', 'regional');
+                }
+                if (promptLower.includes('kannada') || promptLower.includes('ಕನ್ನಡ')) {
+                    keywords.push('kannada', 'ಕನ್ನಡ', 'karnataka', 'south indian', 'regional');
+                }
+                if (promptLower.includes('marathi') || promptLower.includes('मराठी')) {
+                    keywords.push('marathi', 'मराठी', 'maharashtra', 'regional');
+                }
+                if (promptLower.includes('gujarati') || promptLower.includes('ગુજરાતી')) {
+                    keywords.push('gujarati', 'ગુજરાતી', 'gujarat', 'regional');
+                }
+                if (promptLower.includes('bengali') || promptLower.includes('বাংলা')) {
+                    keywords.push('bengali', 'বাংলা', 'west bengal', 'regional');
+                }
+                if (promptLower.includes('punjabi') || promptLower.includes('ਪੰਜਾਬੀ')) {
+                    keywords.push('punjabi', 'ਪੰਜਾਬੀ', 'punjab', 'regional');
+                }
             }
 
             // Remove duplicates and limit to 100+
