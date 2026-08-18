@@ -23,7 +23,7 @@ logging.basicConfig(level=logging.INFO)
 
 # Hunt Results Google Sheet ID
 HUNT_RESULTS_SHEET_ID = os.getenv('HUNT_RESULTS_SHEET_ID', '1Pe7g1XQ1R9GHjlfKGFITqwDFCYJ4SmX9MoeTv_jCu6U')
-SA_KEY_PATH = os.path.expanduser('~/.config/creator-partnerships/sa.json')
+SA_KEY_PATH = os.path.expanduser('~/rm-uploader/sa.json')
 
 # Try to load service account key
 SHEETS_SERVICE = None
