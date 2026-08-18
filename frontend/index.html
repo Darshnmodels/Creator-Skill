@@ -730,7 +730,7 @@
             openTab('evaluate');
         }
 
-        // Generate Keywords from Brief (100+ keywords)
+        // Generate Keywords from Brief (100+ keywords) - Improved
         function generateKeywords() {
             const prompt = document.getElementById('hunt_prompt').value.trim();
 
@@ -742,9 +742,8 @@
             // Comprehensive keyword database for each vertical
             const keywordDatabase = {
                 'crypto': [
-                    // Core crypto terms
                     'crypto trading', 'bitcoin', 'ethereum', 'altcoin', 'cryptocurrency', 'blockchain', 'crypto trader', 'crypto educator',
-                    'bitcoin trading', 'ethereum trading', 'altcoin trading', 'crypto signals', 'trading signals',
+                    'bitcoin trading', 'ethereum trading', 'altcoin trading', 'crypto signals', 'trading signals', 'btc', 'eth',
                     'crypto analysis', 'technical analysis', 'fundamental analysis', 'chart analysis', 'price action',
                     'trading strategy', 'trading strategies', 'scalping', 'swing trading', 'day trading', 'position trading',
                     'crypto wallet', 'blockchain wallet', 'crypto exchange', 'decentralized exchange', 'dex',
@@ -758,12 +757,12 @@
                     'hodl', 'diamond hands', 'paper hands', 'moon', 'bull run', 'bear market', 'correction',
                     'pump and dump', 'whale watching', 'market manipulation', 'liquidation', 'leverage trading',
                     'futures trading', 'margin trading', 'short selling', 'long position', 'short position',
-                    'crypto taxes', 'crypto security', 'cold wallet', 'hot wallet', 'seed phrase', 'private key'
+                    'crypto taxes', 'crypto security', 'cold wallet', 'hot wallet', 'seed phrase', 'private key',
+                    'coin', 'token', 'dapp', 'protocol', 'mining', 'validator'
                 ],
                 'equities': [
-                    // Stock market terms
-                    'stock market', 'trading', 'share market', 'stocks', 'equity', 'nifty', 'bse', 'nse',
-                    'stock trading', 'day trading', 'swing trading', 'intraday trading', 'position trading',
+                    'stock market', 'trading', 'share market', 'stocks', 'equity', 'nifty', 'bse', 'nse', 'sensex',
+                    'stock trading', 'day trading', 'swing trading', 'intraday trading', 'position trading', 'stock trader',
                     'stock analysis', 'technical analysis', 'fundamental analysis', 'chart patterns', 'price action',
                     'stock education', 'stock learning', 'trading course', 'stock market tutorial', 'beginner trading',
                     'nifty 50', 'sensex', 'stock tips', 'trading tips', 'investment tips', 'stock recommendations',
@@ -775,11 +774,11 @@
                     'bull market', 'bear market', 'sideways market', 'market correction', 'market crash',
                     'portfolio management', 'risk management', 'money management', 'trading psychology', 'discipline',
                     'brokerage', 'trading platform', 'zerodha', 'angel broking', 'groww', 'upstox',
-                    'mutual funds', 'index funds', 'etf', 'bonds', 'investment options', 'stock brokers'
+                    'mutual funds', 'index funds', 'etf', 'bonds', 'investment options', 'stock brokers',
+                    'share', 'equity', 'value investing', 'momentum trading'
                 ],
                 'forex': [
-                    // Forex terms
-                    'forex trading', 'currency trading', 'forex trader', 'forex signals', 'currency pairs',
+                    'forex trading', 'currency trading', 'forex trader', 'forex signals', 'currency pairs', 'fx',
                     'eurusd', 'gbpusd', 'usdjpy', 'usdchf', 'currency conversion', 'exchange rate',
                     'forex analysis', 'technical analysis', 'fundamental analysis', 'economic indicators',
                     'forex education', 'forex learning', 'trading course', 'forex tutorial', 'forex strategy',
@@ -790,10 +789,10 @@
                     'geopolitical events', 'interest rates', 'inflation', 'gdp', 'employment data', 'central bank',
                     'scalping forex', 'swing trading forex', 'day trading forex', 'carry trade', 'arbitrage',
                     'forex volatility', 'market hours', 'london session', 'new york session', 'tokyo session',
-                    'currency strength', 'correlation', 'divergence', 'confluence', 'risk reward', 'position sizing'
+                    'currency strength', 'correlation', 'divergence', 'confluence', 'risk reward', 'position sizing',
+                    'dollar', 'pound', 'euro', 'yen'
                 ],
                 'options': [
-                    // Options trading terms
                     'options trading', 'f&o trading', 'derivatives', 'options strategies', 'call option', 'put option',
                     'nifty options', 'bank nifty options', 'options education', 'options learning', 'options course',
                     'call put', 'itm', 'otm', 'atm', 'strike price', 'expiry', 'premium',
@@ -805,11 +804,11 @@
                     'options signals', 'option tips', 'option recommendations', 'weekly options', 'monthly options',
                     'options risk management', 'position sizing', 'stop loss', 'take profit', 'risk reward',
                     'options trading psychology', 'discipline', 'patience', 'emotion control',
-                    'nifty trading', 'bank nifty trading', 'option contracts', 'options expiry'
+                    'nifty trading', 'bank nifty trading', 'option contracts', 'options expiry',
+                    'binaries', 'range trading', 'volatility trading'
                 ],
                 'fintech': [
-                    // Fintech and finance terms
-                    'fintech', 'financial education', 'investing', 'wealth management', 'personal finance',
+                    'fintech', 'financial education', 'investing', 'wealth management', 'personal finance', 'finance',
                     'financial literacy', 'money management', 'budgeting', 'saving tips', 'investment tips',
                     'investment strategies', 'portfolio diversification', 'asset allocation', 'risk assessment',
                     'stocks', 'bonds', 'mutual funds', 'etf', 'index funds', 'gold', 'real estate',
@@ -819,52 +818,73 @@
                     'loan management', 'credit score', 'credit card', 'debt management', 'debt consolidation',
                     'inflation', 'economic trends', 'interest rates', 'market updates', 'economic news',
                     'investment psychology', 'behavioral finance', 'emotional investing', 'discipline', 'patience',
-                    'financial independence', 'fire movement', 'wealth building', 'net worth', 'financial goals'
+                    'financial independence', 'fire movement', 'wealth building', 'net worth', 'financial goals',
+                    'saving', 'banking', 'investment'
                 ]
             };
+
+            // Universal keywords for all verticals
+            const universalKeywords = [
+                'trading', 'investing', 'market', 'analysis', 'education', 'learning', 'course',
+                'tutorial', 'strategy', 'signals', 'tips', 'technical', 'fundamental', 'price action',
+                'money management', 'risk management', 'psychology', 'discipline', 'skill',
+                'creator', 'influencer', 'educator', 'expert', 'trainer', 'coach',
+                'youtube', 'instagram', 'telegram', 'twitter', 'shorts', 'reels', 'live',
+                'india', 'indian', 'hindi', 'english', 'beginner', 'advanced', 'pro'
+            ];
 
             // Extract keywords from prompt
             let keywords = [];
             const promptLower = prompt.toLowerCase();
+            const promptWords = promptLower.split(/\s+/);
 
-            // Check for vertical match and add all relevant keywords
+            // 1. Check for vertical keyword match (smart matching)
+            let matchedVerticals = new Set();
             for (let [vertical, verticalKeywords] of Object.entries(keywordDatabase)) {
+                // Check if vertical name is mentioned
                 if (promptLower.includes(vertical)) {
-                    keywords = [...new Set([...keywords, ...verticalKeywords])];
+                    matchedVerticals.add(vertical);
                 }
-            }
-
-            // If no vertical match, check for individual keywords and infer vertical
-            if (keywords.length === 0) {
-                for (let [vertical, verticalKeywords] of Object.entries(keywordDatabase)) {
-                    for (let keyword of verticalKeywords) {
-                        if (promptLower.includes(keyword)) {
-                            keywords = [...new Set([...keywords, ...verticalKeywords])];
-                            break;
-                        }
+                // Check if any keyword from this vertical appears in prompt
+                for (let keyword of verticalKeywords) {
+                    if (promptLower.includes(keyword)) {
+                        matchedVerticals.add(vertical);
+                        break;
                     }
-                    if (keywords.length > 0) break;
                 }
             }
 
-            // If still no match, use prompt words as keywords
-            if (keywords.length === 0) {
-                keywords = prompt.split(',').map(k => k.trim()).filter(k => k.length > 0);
-                if (keywords.length === 0) {
-                    keywords = prompt.split(' ').map(w => w.trim()).filter(w => w.length > 3);
+            // 2. Add keywords from all matched verticals
+            if (matchedVerticals.size > 0) {
+                for (let vertical of matchedVerticals) {
+                    keywords = [...new Set([...keywords, ...keywordDatabase[vertical]])];
+                }
+            } else {
+                // No vertical matched, add ALL keywords from all verticals
+                for (let vertical in keywordDatabase) {
+                    keywords = [...new Set([...keywords, ...keywordDatabase[vertical]])];
                 }
             }
 
-            // Add language variants for India
+            // 3. Add custom words from prompt as keywords
+            const customKeywords = promptWords
+                .filter(w => w.length > 2 && !['and', 'the', 'for', 'with', 'from', 'are', 'how', 'who', 'what', 'where'].includes(w))
+                .map(w => w.replace(/[,?.!]/g, ''));
+
+            keywords = [...new Set([...keywords, ...customKeywords])];
+
+            // 4. Always add universal keywords
+            keywords = [...new Set([...keywords, ...universalKeywords])];
+
+            // 5. Add language variants for India
             if (promptLower.includes('india') || promptLower.includes('hindi') || promptLower.includes('भारत')) {
-                keywords.push('india', 'hindi', 'indian', 'भारतीय', 'शेयर बाजार', 'क्रिप्टो ट्रेडिंग', 'ट्रेडिंग');
+                keywords.push('india', 'hindi', 'indian', 'भारतीय', 'शेयर बाजार', 'क्रिप्टो', 'फोरेक्स', 'ट्रेडिंग', 'शिक्षा');
             }
-
-            // Add platform variants
-            keywords.push('youtube', 'instagram', 'telegram', 'twitter', 'creator', 'influencer', 'educator', 'expert', 'trainer');
 
             // Remove duplicates and limit to 100+
-            generatedKeywords = [...new Set(keywords)].slice(0, 150);
+            generatedKeywords = [...new Set(keywords)]
+                .filter(k => k && k.length > 0)
+                .slice(0, 200);
 
             // Display generated keywords
             const output = document.getElementById('keywords-output');
